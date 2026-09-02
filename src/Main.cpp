@@ -11,6 +11,8 @@
 #include "Logger.h"
 #include "ShaderLibrary.h"
 #include "Camera.h"
+#include "Math.h"
+#include "Mesh.h"
 
 #include <glad/glad.h>
 #include <SDL3/SDL.h>
@@ -21,20 +23,6 @@
 
 #include <vector>
 #include <filesystem>
-
-glm::mat4 AffineInverse(glm::mat4 M)
-{
-    glm::mat3 inverse( M );
-    inverse = glm::inverse(inverse);
-
-    glm::mat4 result(inverse);
-    result[3][3] = 1;
-
-    glm::vec3 invTranslate = -M[3];
-    result = glm::translate( result, invTranslate );
-
-    return result;
-}
 
 int main ( int argc, char* argv[] )
 {

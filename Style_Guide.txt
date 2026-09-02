@@ -44,7 +44,7 @@ Naming:
     c++ header files will use the hpp extension
     Files, functions, methods, classes, and other structures will use PascalCase
     variables will use camelCase
-    member variables are prefaced with m underscore (m_memberVariable)
+    class member variables are prefaced with m underscore (m_memberVariable)
     constant values are prefaced with c underscore (c_constantVariable)
     statuc variable are prefaced with s underscore (s_staticVariable)
     pointers (and by extension, arrays) are prefaces with p underscore (p_pointerVariable)
