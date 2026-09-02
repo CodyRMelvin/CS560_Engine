@@ -1,0 +1,57 @@
+Spacing and indenting:
+    Tabs are to be 4 spaces.
+    Allman indenting is used for functions, if, while, for, etc.
+    Use of no {} is acceptable in cases where there is no further indenting
+    Sections using : (public, private, cases, etc.) are to be indented
+    Macro/define if statements are not to be indented at all
+    Chunks of related code are expected to be broken up by a single empty line
+    Extra lines are acceptable for areas still being developed heavily
+    parameters pass into parentheses with have a space seperating them from the parentheses unless-
+    only one non-function paramteter is passed in. Examples:
+        Foo( 1, 2 );  -- acceptable
+        Foo(1);       -- acceptable
+        Foo( Bar() ); -- acceptable
+        Foo(1, 2);    -- unnacceptable
+        Foo(Bar())    -- unnacceptable
+    Lines will be 100 characters max
+
+File formatting:
+    The beginning of each file will contain file header that follow this format:
+//**************************************************************************************************
+// File   : FileName.cpp
+// Author : Author name
+// Date   : yyy/mm/dd of file creation
+// Brief  : One line description of file
+//**************************************************************************************************
+    Follwing will be three include sections: 1. files, 2. linked libraries, 3. standard library
+    Next are any definitions and macros
+    Next are any using or typedef statements
+    Next are any enums or structs
+    Next are any global or static variables
+    For header files, next will be function declarations then classes
+    For c/cpp file, next will be private function prototypes, then function and method definitions
+        Definitions will follow the order of the header file
+    Class ordering:
+        Public above private
+        Enums and structs
+        then variables
+        then constructors and destructors
+        then operator overloads
+        then getter and setters
+        then other methods
+
+Naming:
+    c++ header files will use the hpp extension
+    Files, functions, methods, classes, and other structures will use PascalCase
+    variables will use camelCase
+    member variables are prefaced with m underscore (m_memberVariable)
+    constant values are prefaced with c underscore (c_constantVariable)
+    statuc variable are prefaced with s underscore (s_staticVariable)
+    pointers (and by extension, arrays) are prefaces with p underscore (p_pointerVariable)
+        in cases of layered arrays or pointers, a number is added (int*** p3_whatAreYouDoing)
+        if multiple prefaces are used, follow m_s_c_p_memberConstantPointerVariable priority
+    enum values will follow camelCase, prefaced with enum name. (EnumObject::enumObjectInvalid)
+    macros and defines will use UPPER_SNAKE_CASE
+        macros which serve to "mask" or wrap around another item will borrow convention
+    Shader files will have 2 "postfixes", the latter is .glsl, and the prior is a 4 letter string
+        detailing the shader type ( vert for vertex, frag for fragment, comp for compute, etc. )

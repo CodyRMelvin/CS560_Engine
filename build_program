@@ -1,0 +1,17 @@
+#! /bin/bash
+
+BUILD="build"
+CONFIG=""
+
+if [ ${1^^} == "RELEASE" ]; then
+    CONFIG="Release"
+elif [ ${1^^} == "DEBUG" ]; then
+    CONFIG="Debug"
+elif [ ${1^^} == "RELWITHDEBINFO" ]; then
+    CONFIG="RelWithDebInfo"
+else
+   echo "unrecognized build configuration"
+   exit 1
+fi
+
+cmake --build $BUILD --config $CONFIG -v

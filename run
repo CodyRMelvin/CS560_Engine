@@ -1,0 +1,19 @@
+#! /bin/bash
+
+BUILD="build"
+NINJA=""
+
+if [ ${1^^} == "RELEASE" ]; then
+    NINJA="build-Release.ninja"
+elif [ ${1^^} == "DEBUG" ]; then
+    NINJA="build-Debug.ninja"
+elif [ ${1^^} == "RELWITHDEBINFO" ]; then
+    NINJA="build-RelWithDebInfo.ninja"
+else
+    echo "unrecognized build configuration"
+    exit 0
+fi
+
+cd ${BUILD}
+ninja -f ${NINJA} run
+cd -

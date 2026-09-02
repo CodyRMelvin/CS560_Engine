@@ -1,0 +1,6 @@
+[submodule "dependencies/external/SDL"]
+	path = dependencies/external/SDL
+	url = https://github.com/libsdl-org/SDL.git
+[submodule "dependencies/external/glm"]
+	path = dependencies/external/glm
+	url = https://github.com/g-truc/glm.git
