@@ -5,26 +5,30 @@
 // Brief  : Header file for system to compile and organize shaders
 //**************************************************************************************************
 
+#ifndef SHADERLIBRARY_H
+#define SHADERLIBRARY_H
+
 #include <glad/glad.h>
 
 #include <vector>
 #include <string>
 
-struct Shader
+class Shader
 {
-    enum ShaderType
-    {
-        shaderTypeFragment,
-        shaderTypeVertex,
-        shaderTypeCompute,
-        shaderTypeGeometry
-    };
+    public:
+        enum ShaderType
+        {
+            shaderTypeFragment,
+            shaderTypeVertex,
+            shaderTypeCompute,
+            shaderTypeGeometry
+        };
 
-    Shader( GLuint address, std::string name, ShaderType type );
+        Shader( GLuint address, std::string name, ShaderType type );
 
-    const GLuint m_shaderAddress;
-    const std::string m_shaderName;
-    const ShaderType m_type;
+        const GLuint m_shaderAddress;
+        const std::string m_shaderName;
+        const ShaderType m_type;
 };
 
 
@@ -39,3 +43,5 @@ class ShaderLibrary
     private:
         static std::vector<Shader> m_shaders;        
 };
+
+#endif

@@ -41,7 +41,7 @@ File formatting:
         then other methods
 
 Naming:
-    c++ header files will use the hpp extension
+    c++ header files will use the h extension
     Files, functions, methods, classes, and other structures will use PascalCase
     variables will use camelCase
     class member variables are prefaced with m underscore (m_memberVariable)

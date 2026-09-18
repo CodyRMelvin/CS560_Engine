@@ -5,6 +5,9 @@
 // Brief  : Header file for class containing camera information and operations
 //**************************************************************************************************
 
+#ifndef CAMERA_H
+#define CAMERA_H
+
 #include <glm/glm.hpp>
 
 class Camera
@@ -44,3 +47,5 @@ class Camera
         glm::vec4 m_right, m_back, m_up;
         float m_vpDistance, m_nearDistance, m_farDistance, m_vpWidth, m_vpHeight;
 };
+
+#endif

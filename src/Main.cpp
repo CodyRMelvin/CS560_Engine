@@ -119,24 +119,18 @@ int main ( int argc, char* argv[] )
     //Tell opengl this program is currently being used
     glUseProgram(program);
 
+    glm::vec3 v0 = glm::vec3( -0.5, -0.5,    0 );
+    glm::vec3 v1 = glm::vec3(  0.5, -0.5,    0 );
+    glm::vec3 v2 = glm::vec3(    0,  0.5,    0 );
+    glm::vec3 v3 = glm::vec3(    0,    0, -0.5 );
+
     glm::vec3 p_triangle[] = 
     {
-        { -0.5, -0.5,    0 }, //0
-        {  0.5, -0.5,    0 }, //1
-        {    0,  0.5,    0 }, //2
-        { -0.5, -0.5,    0 }, //0
-        {    0,    0, -0.5 }, //3
-        {  0.5, -0.5,    0 }, //1
-        { -0.5, -0.5,    0 }, //0
-        {    0,  0.5,    0 }, //2
-        {    0,    0, -0.5 }, //3
-        {  0.5, -0.5,    0 }, //1
-        {    0,    0, -0.5 }, //3
-        {    0,  0.5,    0 }, //2
+        v0, v2, v1, v0, v3, v1, v0, v2, v3, v1, v3, v2 
     };
 
-    unsigned int p_indicies[] = 
-    { 
+    std::vector<uint32_t> p_indicies = 
+    {
         //Back face
         0, 1, 2,
         //Bottom face
@@ -159,50 +153,20 @@ int main ( int argc, char* argv[] )
         norm2, norm2, norm2,
         norm3, norm3, norm3
     };
+
+    std::vector<Vertex> prism;
+    for( uint32_t i = 0; i < glm::countof(p_triangle); ++i )
+    {
+        Vertex v;
+        v.pos = p_triangle[i];
+        v.nrm = p_normals[i];
+        v.tex = glm::vec2( 0, 0 );
+        prism.push_back(v);
+    }
+
+    Mesh m( prism, p_indicies );
     
-    // unsigned int indicies[] = { 0, 1, 2, 1, 3, 2 };
-
-    //Allocates a vertex array object and tells opengl to use this one.
-    //A VAO holds references to buffers and other object required to supply the vertex shader
-    GLuint VAO;
-    glCreateVertexArrays( 1, &VAO );
-    glBindVertexArray(VAO);
-
-    //Allocate a buffer and bind it to the vao as a vertex buffer
-    GLuint vBuffer;
-    glCreateBuffers( 1, &vBuffer );
-    glBindBuffer( GL_ARRAY_BUFFER, vBuffer );
-    //Copy data to the bound buffer
-    //GL_STATIC_DRAW states that the data will be copied once and used multiple times as source- 
-    //for drawing and image specification commands
-    glBufferData( GL_ARRAY_BUFFER, sizeof(p_triangle), p_triangle, GL_STATIC_DRAW );
-    //Defines information for the currently bound buffer, such as it's index, size, data type, and stride
-    glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0 );
-    //Enable use of the vertex array at index 0
-    glEnableVertexAttribArray(0);
-
-    GLuint iBuffer;
-    glCreateBuffers( 1, &iBuffer );
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, iBuffer );
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(p_indicies), p_indicies, GL_STATIC_DRAW );
-
-#if FLATSHADE
-    GLuint normalBuffer;
-    glCreateBuffers( 1, &normalBuffer );
-    glBindBuffer( GL_ARRAY_BUFFER, normalBuffer );
-    glBufferData( GL_ARRAY_BUFFER, sizeof(p_normals), p_normals, GL_STATIC_DRAW );
-    glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0 );
-    glEnableVertexAttribArray(1);
-#endif
-
-    glBindBuffer( GL_ARRAY_BUFFER, 0 );
-    glBindVertexArray(0);
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, 0 );
-
     glEnable(GL_DEPTH);
-#if !WIRE
-    glEnable(GL_CULL_FACE);
-#endif
 
     Camera cam( 70.f, 4.f / 3.f, .1f, 10.f, glm::vec4( 0, 1, 0, 0 ), 
                 glm::vec4( 0, 0, 0, 1 ), glm::vec4( 0, 0, 1, 0 ) );
@@ -240,13 +204,7 @@ int main ( int argc, char* argv[] )
     
         glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr(rotMatrix) );
 
-        glBindVertexArray(VAO);
-
-        // glDrawArrays( GL_TRIANGLES, 0, 3 );
-#if WIRE
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
-#endif
-        glDrawElements( GL_TRIANGLES, GLM_COUNTOF(p_indicies), GL_UNSIGNED_INT, 0 );
+        m.Draw();
 
         glFlush();
         
@@ -303,9 +261,6 @@ int main ( int argc, char* argv[] )
     
     //Delete the program, vertex buffer, and vao
     glDeleteProgram(program);
-    glDeleteBuffers( 1, &vBuffer );
-    glDeleteBuffers( 1, &iBuffer );
-    glDeleteVertexArrays( 1, &VAO );
 
     return 0;
 }

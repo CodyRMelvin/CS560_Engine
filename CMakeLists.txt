@@ -12,11 +12,20 @@ set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAK
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 
+if(WIN32)
+    target_compile_definitions( ${PROJECT_NAME} PRIVATE "WIN32" )
+endif()
+if(UNIX)
+    target_compile_definitions( ${PROJECT_NAME} PRIVATE "UNIX" )
+endif()
+
 set( CMAKE_CXX_STANDARD 23 )
+
 target_compile_features( ${PROJECT_NAME} PUBLIC cxx_std_23 )
 
 set( CMAKE_CXX_FLAGS "-Wall -Werror -Wextra" )
-set( CMAKE_CXX_FLAGS_DEBUG "-g" )
+set( CMAKE_CXX_FLAGS_DEBUG "-O0 -g" )
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O4 -g" )
 set( CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG" )
 # set( CMAKE_EXPORT_COMPILE_COMMANDS ON )
 

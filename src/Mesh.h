@@ -5,10 +5,12 @@
 // Brief  : Public interface of class which encapsulates a 3D mesh
 //**************************************************************************************************
 
+#pragma once
 #ifndef MESH_H
 #define MESH_H
 
 #include "Math.h"
+#include "ShaderLibrary.h"
 
 #include <glad/glad.h>
 
@@ -20,7 +22,10 @@ class Mesh
         std::vector<Vertex> m_vertices;
         std::vector<uint32_t> m_indices;
 
-        Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t> indices );
+        Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices );
+        ~Mesh();
+
+        void Draw() const;
 
     private:
         GLuint m_VAO, m_VBO, m_EBO;
