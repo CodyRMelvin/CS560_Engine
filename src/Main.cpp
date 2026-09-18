@@ -42,8 +42,6 @@ int main ( int argc, char* argv[] )
         return -1;
     }
 
-    Logger::LogLine( Logger::severityInfo, "SDL3 intialized" );
-    
     SDL_Event e;
     bool quit = false;
 

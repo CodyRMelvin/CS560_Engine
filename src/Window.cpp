@@ -64,6 +64,7 @@ void Window::Initialize()
     }
 
     SDL_GL_SetSwapInterval(1);
+    Logger::LogLine( Logger::severityInfo, "SDL3 intialized" );
 }
 
 void Window::SwapWindow() const
