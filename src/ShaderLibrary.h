@@ -9,29 +9,12 @@
 #ifndef SHADERLIBRARY_H
 #define SHADERLIBRARY_H
 
+#include "Shader.h"
+
 #include <glad/glad.h>
 
 #include <vector>
 #include <string>
-
-class Shader
-{
-    public:
-        enum ShaderType
-        {
-            shaderTypeFragment,
-            shaderTypeVertex,
-            shaderTypeCompute,
-            shaderTypeGeometry
-        };
-
-        Shader( GLuint address, std::string name, ShaderType type );
-
-        const GLuint m_shaderAddress;
-        const std::string m_shaderName;
-        const ShaderType m_type;
-};
-
 
 class ShaderLibrary
 {

@@ -47,12 +47,6 @@ bool VerifyShader(GLuint shader)
     return false;
 }
 
-Shader::Shader( GLuint address, std::string name, ShaderType type )
-    : m_shaderAddress(address)
-    , m_shaderName(name)
-    , m_type(type)
-{ }
-
 GLuint ShaderLibrary::GetShaderAddress(std::string name)
 {
     //Iterate and find shader with the correct name
