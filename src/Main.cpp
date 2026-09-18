@@ -13,11 +13,9 @@
 #include "Camera.h"
 #include "Math.h"
 #include "Mesh.h"
+#include "Window.h"
 
 #include <glad/glad.h>
-#include <SDL3/SDL.h>
-#include <SDL3/SDL_main.h>
-#include <SDL3/SDL_hints.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
@@ -29,36 +27,14 @@ int main ( int argc, char* argv[] )
     Logger::Initialize(Logger::severityInfo);
     Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
 
-    SDL_Window* p_window = nullptr;
-    SDL_GLContext p_context = nullptr;
+    Window window( 800, 600 ); 
+    try { window.Initialize(); }
+    catch (std::runtime_error e)
+    {
+        Logger::LogLine( Logger::severityError, e.what() );
+        return -1;
+    }
     
-    int result = SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS );
-    if ( result < 0 )
-    {
-        Logger::LogLine( Logger::severityError, "SDL_Init error: {}", SDL_GetError() );
-        Logger::Shutdown();
-        return -1;
-    }
-
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-    
-    p_window = SDL_CreateWindow( "Window", 800, 600, SDL_WINDOW_OPENGL );
-    if (!p_window)
-    {
-        Logger::LogLine( Logger::severityError, "SDL_CreateWindow error: {}", SDL_GetError() );
-        Logger::Shutdown();
-        return -1;
-    }
-
-    p_context = SDL_GL_CreateContext(p_window);
-    if (!p_context)
-    {
-        Logger::LogLine( Logger::severityError, "SDL_CreateContext error: {}", SDL_GetError() );
-        Logger::Shutdown();
-        return -1;
-    }
-
     if ( !gladLoadGL() )
     {
         Logger::LogLine( Logger::severityError, "gladLoadGL failure" );
@@ -67,8 +43,6 @@ int main ( int argc, char* argv[] )
     }
 
     Logger::LogLine( Logger::severityInfo, "SDL3 intialized" );
-
-    SDL_GL_SetSwapInterval(1);
     
     SDL_Event e;
     bool quit = false;
@@ -207,8 +181,8 @@ int main ( int argc, char* argv[] )
         m.Draw();
 
         glFlush();
-        
-        SDL_GL_SwapWindow(p_window);
+
+        window.SwapWindow();
 
         while ( SDL_PollEvent(&e) )
         {
@@ -254,10 +228,6 @@ int main ( int argc, char* argv[] )
             }
         }
     }
-
-    Logger::LogLine( Logger::severityInfo, "SDL_Shutdown" );
-    SDL_GL_DestroyContext(p_context);
-    SDL_DestroyWindow(p_window);
     
     //Delete the program, vertex buffer, and vao
     glDeleteProgram(program);

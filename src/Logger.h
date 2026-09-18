@@ -84,6 +84,48 @@ class Logger
 #endif
         }
 
+        static void LogLineBase( std::string file, int line, Severity severity, std::string string )
+        {
+            //Verify file is open
+            if ( !m_s_logFile.is_open() )
+                return;
+            //Check if severity passes filter
+            if ( severity < m_s_filter )
+                return;
+
+            //Create a variable to hold the output and preface it with the severity
+            std::string outString;
+            switch (severity)
+            {
+                case severityInfo:
+                    outString += "Info: ";
+                    break;
+                case severityWarning:
+                    outString += "Warning: ";
+                    break;
+                case severityError:
+                    outString += "Error: ";
+                    break;
+            }
+
+            //Remove the path leading up to the file
+            std::string::size_type s = file.rfind("/");
+            if ( s != std::string::npos )
+            {
+                file.erase( file.begin(), file.begin() + s + 1 );
+            }
+
+            outString += string;
+            //Format additional details for the file and line of origin
+            outString += std::format( " - in {} line {}", file, line );
+
+            //Print to the log, if in debug print to the console
+            m_s_logFile << outString << "\n";
+#ifdef _DEBUG
+            std::cout << outString << "\n";
+#endif
+        }
+
         static void Shutdown();
 
     private:
