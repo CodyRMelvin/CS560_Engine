@@ -5,6 +5,7 @@
 // Brief  : Header file for system to compile and organize shaders
 //**************************************************************************************************
 
+#pragma once
 #ifndef SHADERLIBRARY_H
 #define SHADERLIBRARY_H
 
