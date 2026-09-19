@@ -12,31 +12,39 @@
 #include "glad/glad.h"
 
 #include <string>
-#include <vector>
+#include <filesystem>
 
 class Shader
 {
     public:
         enum ShaderType
         {
-            shaderTypeFragment,
+            shaderTypeInvalid = -1,
             shaderTypeVertex,
+            shaderTypeFragment,
             shaderTypeCompute,
             shaderTypeGeometry,
-            shaderTypeTesselation
         };
 
         Shader();
         ~Shader();
 
+        void LoadShader(std::filesystem::directory_entry path);
+        void LoadShader(std::string path);
+        void Destroy();
+
+        void Link() const;
+        bool Verify() const;
+
+        std::string_view Name() const {return m_name;}
+        ShaderType Type() const {return m_type;}
+        GLuint Program() const {return m_program;} 
+
     private:
-        struct ShaderElement
-        {
-            GLuint m_shaderAddress;
-            std::string m_shaderName;
-            ShaderType m_types;
-        };
-        
+        GLuint m_shader;
+        GLuint m_program;
+        std::string m_name;
+        ShaderType m_type;
 };
 
 #endif

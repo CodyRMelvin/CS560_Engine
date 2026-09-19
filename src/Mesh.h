@@ -10,7 +10,6 @@
 #define MESH_H
 
 #include "Math.h"
-#include "ShaderLibrary.h"
 
 #include <glad/glad.h>
 

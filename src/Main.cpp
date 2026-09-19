@@ -47,49 +47,36 @@ int main ( int argc, char* argv[] )
 
     std::filesystem::path dir = std::filesystem::current_path();
     std::string pathStr = dir.string();
-    std::string::size_type s = pathStr.find("/bin");
-    if ( s != std::string::npos )
+    std::string::size_type size = pathStr.find("/bin");
+    if ( size != std::string::npos )
     {
-        pathStr.erase( pathStr.begin() + s, pathStr.end() );
+        pathStr.erase( pathStr.begin() + size, pathStr.end() );
     }
     pathStr += "/shaders";
     ShaderLibrary::CompileShaders(pathStr);
 
-    //Create a program object, attach the shaders, and link
-    GLuint program = glCreateProgram();
+    //Create a pipeline object, attach the shaders, and link
+    GLuint pipeline;
+    glGenProgramPipelines( 1, &pipeline );
+
 #if FLATSHADE
-    glAttachShader( program, ShaderLibrary::GetShaderAddress("FlatShade", Shader::shaderTypeVertex) );
-    glAttachShader( program, ShaderLibrary::GetShaderAddress("FlatShade", Shader::shaderTypeFragment) );
+    Shader vs = ShaderLibrary::GetShader("FlatShade", Shader::shaderTypeVertex );
+    vs.Link();
+    glUseProgramStages( pipeline, GL_VERTEX_SHADER_BIT, vs.Program() );
+    Shader fs = ShaderLibrary::GetShader("FlatShade", Shader::shaderTypeFragment);
+    fs.Link();
+    glUseProgramStages( pipeline, GL_FRAGMENT_SHADER_BIT, fs.Program() );
 #else
-    glAttachShader( program, ShaderLibrary::GetShaderAddress("demo", Shader::shaderTypeVertex) );
-    glAttachShader( program, ShaderLibrary::GetShaderAddress("demo", Shader::shaderTypeFragment) );
+    Shader s = ShaderLibrary::GetShader("demo", Shader::shaderTypeVertex );
+    s.Link();
+    glUseProgramStages( pipeline, GL_VERTEX_SHADER_BIT, s.Program() );
+    s = ShaderLibrary::GetShader("demo", Shader::shaderTypeFragment);
+    s.Link();
+    glUseProgramStages( pipeline, GL_FRAGMENT_SHADER_BIT, s.Program() );
 #endif
-    //Linking a program adds the shaders aas executables that can be called
-    //Additionally, it sets all uniforms to 0, and allows them to be queried by name
-    glLinkProgram(program);
 
-    //After linking, allocated shader objects are no longer needed
-    ShaderLibrary::DeleteShaders();
-
-    //Check the compilation status of the program
-    GLint status = 0;
-    glGetProgramiv( program, GL_LINK_STATUS, &status );
-    if (status == GL_FALSE)
-    {
-        GLint size = 0;
-        glGetProgramiv( program, GL_INFO_LOG_LENGTH, &size );
-        std::vector<char> errorMSG;
-        errorMSG.reserve(size);
-        glGetProgramInfoLog( program, size, &size, errorMSG.data() );
-        Logger::LogLine( Logger::severityError, "OpenGL program error: {}", errorMSG.data() );
-        Logger::Shutdown();
-        
-        glDeleteProgram(program);
-        return -1;
-    }
-
-    //Tell opengl this program is currently being used
-    glUseProgram(program);
+    //Tell opengl this pipeline is currently being used
+    glBindProgramPipeline(pipeline);
 
     glm::vec3 v0 = glm::vec3( -0.5, -0.5,    0 );
     glm::vec3 v1 = glm::vec3(  0.5, -0.5,    0 );
@@ -143,6 +130,7 @@ int main ( int argc, char* argv[] )
     Camera cam( 70.f, 4.f / 3.f, .1f, 10.f, glm::vec4( 0, 1, 0, 0 ), 
                 glm::vec4( 0, 0, 0, 1 ), glm::vec4( 0, 0, 1, 0 ) );
 
+    glUseProgram( vs.Program() );
 #if FLATSHADE
     glm::mat4 normalMatrix = cam.Model();
     normalMatrix[3][0] = normalMatrix[3][1] = 0;
@@ -154,6 +142,7 @@ int main ( int argc, char* argv[] )
 
     glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( cam.View() ) );
     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( cam.Perspective() ) );
+    glUseProgram(0);
 
     while (!quit)
     {
@@ -173,8 +162,10 @@ int main ( int argc, char* argv[] )
         // scale += .2;
         // glm::mat4 rotMatrix = {1};
         // rotMatrix[0][0] = rotMatrix[1][1] = s_scale;
-    
+
+        glUseProgram( vs.Program() );
         glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr(rotMatrix) );
+        glUseProgram(0);
 
         m.Draw();
 
@@ -228,7 +219,9 @@ int main ( int argc, char* argv[] )
     }
     
     //Delete the program, vertex buffer, and vao
-    glDeleteProgram(program);
+    glDeleteProgramPipelines( 1, &pipeline );
+    ShaderLibrary::DeleteShaders();
+    Logger::Shutdown();
 
     return 0;
 }

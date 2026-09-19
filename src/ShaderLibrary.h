@@ -19,8 +19,8 @@
 class ShaderLibrary
 {
     public:
-        static GLuint GetShaderAddress(std::string name);
-        static GLuint GetShaderAddress( std::string name, Shader::ShaderType type );
+        static Shader GetShader(std::string name);
+        static Shader GetShader( std::string name, Shader::ShaderType type );
         static void CompileShaders(std::string directory);
         static void DeleteShaders();
 
