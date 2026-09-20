@@ -16,9 +16,6 @@ Mesh::Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& in
     InitializeMesh();
 }
 
-Mesh::~Mesh()
-{ }
-
 void Mesh::Destroy()
 {
     glDeleteBuffers( 1, &m_VBO );

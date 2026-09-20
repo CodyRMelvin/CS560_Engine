@@ -23,7 +23,7 @@ class Mesh
 
         Mesh() = default;
         Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices );
-        ~Mesh();
+        ~Mesh() = default;
 
         void Draw() const;
         void Destroy();
