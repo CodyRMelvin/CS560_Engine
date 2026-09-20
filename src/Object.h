@@ -17,13 +17,15 @@
 class Object
 {
     public:
-        Object() = default;
-        Object( Mesh m, Transform t );
-        ~Object() = default;
 
         Mesh mesh;
         Transform transform;
 
+        Object() = default;
+        Object( Mesh m, Transform t );
+        ~Object() = default;
+
+        void Destroy();
         // Stubs for later use
         void Render() const;
         void Deserialize(std::filesystem::directory_entry source);

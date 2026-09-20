@@ -133,7 +133,8 @@ int main ( int argc, char* argv[] )
         vertices.push_back(v);
     }
 
-    Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
+    //Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
+    Object prism( Mesh( vertices, p_indicies ), Transform( 1, 1, 1, 0, 0, 2.5 ) ) ;
     
     glEnable(GL_DEPTH);
     glEnable(GL_CULL_FACE);
@@ -162,7 +163,7 @@ int main ( int argc, char* argv[] )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         static float s_rot = 0;
-        //s_rot += M_PI / 128;
+        s_rot += M_PI / 128;
         prism.transform.Rotation( glm::vec3( 0, 1, 0 ), s_rot );
 
         glUseProgram( vs.Program() );
@@ -171,7 +172,6 @@ int main ( int argc, char* argv[] )
 
         prism.mesh.Draw();
 
-        //HEREHEREHERE
         glFlush();
 
         window.SwapWindow();
@@ -226,6 +226,7 @@ int main ( int argc, char* argv[] )
     //Delete the program, vertex buffer, and vao
     glDeleteProgramPipelines( 1, &pipeline );
     ShaderLibrary::DeleteShaders();
+    prism.Destroy();
     Logger::Shutdown();
 
     return 0;

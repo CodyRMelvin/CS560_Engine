@@ -17,10 +17,16 @@ Mesh::Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& in
 }
 
 Mesh::~Mesh()
+{ }
+
+void Mesh::Destroy()
 {
     glDeleteBuffers( 1, &m_VBO );
     glDeleteBuffers( 1, &m_EBO );
     glDeleteVertexArrays( 1, &m_VAO );
+    m_VAO = 0;
+    m_EBO = 0;
+    m_VBO = 0;
 }
 
 void Mesh::Draw() const

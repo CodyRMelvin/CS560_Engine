@@ -13,6 +13,11 @@ Object::Object( Mesh m, Transform t )
     , transform(t)
 { }
 
+void Object::Destroy()
+{
+    mesh.Destroy();
+}
+
 void Object::Render() const
 {
 

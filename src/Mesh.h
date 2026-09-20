@@ -26,6 +26,7 @@ class Mesh
         ~Mesh();
 
         void Draw() const;
+        void Destroy();
 
     private:
         GLuint m_VAO, m_VBO, m_EBO;
