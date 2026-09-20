@@ -14,6 +14,7 @@
 #include "Math.h"
 #include "Mesh.h"
 #include "Window.h"
+#include "Transform.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -124,6 +125,7 @@ int main ( int argc, char* argv[] )
     }
 
     Mesh m( prism, p_indicies );
+    Transform t( 1, 1, 1, 0, 0, 2.5 );
     
     glEnable(GL_DEPTH);
     glEnable(GL_CULL_FACE);
@@ -150,22 +152,13 @@ int main ( int argc, char* argv[] )
         glClearDepth(1);
         glClearColor( 0, 0, 1, 1 );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-        // glClear( GL_COLOR_BUFFER_BIT );
 
         static float s_rot = 0;
         s_rot += M_PI / 128;
-
-        glm::mat4 rotMatrix = {1};
-        rotMatrix = glm::translate( rotMatrix, glm::vec3( 0, 0, 2.5 ) );
-        rotMatrix = glm::rotate( rotMatrix, s_rot, { 0, 1, 0} );
-
-        // static float s_scale = 1;
-        // scale += .2;
-        // glm::mat4 rotMatrix = {1};
-        // rotMatrix[0][0] = rotMatrix[1][1] = s_scale;
+        t.Rotation( glm::vec3( 0, 1, 0 ), s_rot );
 
         glUseProgram( vs.Program() );
-        glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr(rotMatrix) );
+        glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr( t.Matrix() ) );
         glUseProgram(0);
 
         m.Draw();

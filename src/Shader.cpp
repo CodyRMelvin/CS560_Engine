@@ -146,7 +146,6 @@ void Shader::Destroy()
 {
     glDeleteShader(m_shader);
     glDeleteProgram(m_program);
-    Logger::LogLine( Logger::severityError, "Test" );
 }
 
 void Shader::Link() const
