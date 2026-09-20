@@ -85,7 +85,7 @@ int main ( int argc, char* argv[] )
 
     glm::vec3 p_triangle[] = 
     {
-        v0, v2, v1, v0, v3, v1, v0, v2, v3, v1, v3, v2 
+        v1, v2, v0, v0, v3, v1, v0, v2, v3, v1, v3, v2 
     };
 
     std::vector<uint32_t> p_indicies = 
@@ -126,6 +126,7 @@ int main ( int argc, char* argv[] )
     Mesh m( prism, p_indicies );
     
     glEnable(GL_DEPTH);
+    glEnable(GL_CULL_FACE);
 
     Camera cam( 70.f, 4.f / 3.f, .1f, 10.f, glm::vec4( 0, 1, 0, 0 ), 
                 glm::vec4( 0, 0, 0, 1 ), glm::vec4( 0, 0, 1, 0 ) );
@@ -211,8 +212,10 @@ int main ( int argc, char* argv[] )
 
                     
 
+                    glUseProgram( vs.Program() );
                     glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( cam.Model() ) );
                     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( cam.Perspective() ) );
+                    glUseProgram(0);
                     break;
             }
         }
