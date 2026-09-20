@@ -21,6 +21,7 @@ class Mesh
         std::vector<Vertex> m_vertices;
         std::vector<uint32_t> m_indices;
 
+        Mesh() = default;
         Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices );
         ~Mesh();
 

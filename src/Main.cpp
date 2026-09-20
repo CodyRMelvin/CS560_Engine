@@ -12,9 +12,8 @@
 #include "ShaderLibrary.h"
 #include "Camera.h"
 #include "Math.h"
-#include "Mesh.h"
 #include "Window.h"
-#include "Transform.h"
+#include "Object.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -22,6 +21,12 @@
 
 #include <vector>
 #include <filesystem>
+
+void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
+{
+    Logger::LogLine( Logger::severityError, "Source: {}, type: {}, id: {}, severity: {}, length: {}, message: {}, userParam: {}",
+                     source, type, id, severity, length, message, userParam );
+}
 
 int main ( int argc, char* argv[] )
 {
@@ -42,6 +47,10 @@ int main ( int argc, char* argv[] )
         Logger::Shutdown();
         return -1;
     }
+
+    glEnable(GL_DEBUG_OUTPUT);
+    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); 
+    glDebugMessageCallback(glDebugOutput, nullptr);
 
     SDL_Event e;
     bool quit = false;
@@ -114,18 +123,17 @@ int main ( int argc, char* argv[] )
         norm3, norm3, norm3
     };
 
-    std::vector<Vertex> prism;
+    std::vector<Vertex> vertices;
     for( uint32_t i = 0; i < glm::countof(p_triangle); ++i )
     {
         Vertex v;
         v.pos = p_triangle[i];
         v.nrm = p_normals[i];
         v.tex = glm::vec2( 0, 0 );
-        prism.push_back(v);
+        vertices.push_back(v);
     }
 
-    Mesh m( prism, p_indicies );
-    Transform t( 1, 1, 1, 0, 0, 2.5 );
+    Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
     
     glEnable(GL_DEPTH);
     glEnable(GL_CULL_FACE);
@@ -154,15 +162,16 @@ int main ( int argc, char* argv[] )
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
         static float s_rot = 0;
-        s_rot += M_PI / 128;
-        t.Rotation( glm::vec3( 0, 1, 0 ), s_rot );
+        //s_rot += M_PI / 128;
+        prism.transform.Rotation( glm::vec3( 0, 1, 0 ), s_rot );
 
         glUseProgram( vs.Program() );
-        glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr( t.Matrix() ) );
+        glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr( prism.transform.Matrix() ) );
         glUseProgram(0);
 
-        m.Draw();
+        prism.mesh.Draw();
 
+        //HEREHEREHERE
         glFlush();
 
         window.SwapWindow();

@@ -10,21 +10,11 @@
 #include <utility>  // forward
 #include <string>   // string, rfind, erase, size_type, begin
 #include <iostream> // cout
-
-#ifdef FALSE
-//Ugly macro bullshit to allow for logline without any additional args
-//Credit to https://stackoverflow.com/a/11763277
-#define EXPAND(x)                           x
-#define GET_MACRO(_1, _2, _3, name, ...)    name
-#define LogLine(...)    EXPAND( GET_MACRO( __VA_ARGS__, LogLine3, LogLine2 ) (__VA_ARGS__) )
-
-//Macro wrappers to inject file name and line number
-#define LogLine3( severity, fmt, args ) LogLineBase( severity, __FILE__, __LINE__, fmt, args )
-#define LogLine2( severity, fmt ) LogLineBase( severity, __FILE__, __LINE__, fmt )
-#endif
+#include <filesystem>
 
 //Macro wrapper to inject file name and line number
 #define LogLine(...) LogLineBase( __FILE__, __LINE__, __VA_ARGS__)
+#define TestLog(severity) LogLineBase( __FILE__, __LINE__, severity, "Test" )
 
 class Logger
 {
@@ -42,12 +32,12 @@ class Logger
         static void LogLineBase( std::string file, int line, Severity severity, 
                                  std::format_string<Args...> fmt, Args&&... args )
         {
-            //Verify file is open
-            if ( !m_s_logFile.is_open() )
-                return;
             //Check if severity passes filter
             if ( severity < m_s_filter )
                 return;
+            //Verify file is open
+            if ( !m_s_logFile.is_open() )
+                m_s_logFile.open( m_s_filePath, std::ios_base::app );
 
             //Create a variable to hold the output and preface it with the severity
             std::string outString;
@@ -79,6 +69,7 @@ class Logger
 
             //Print to the log, if in debug print to the console
             m_s_logFile << outString << "\n";
+            m_s_logFile.close();
 #ifdef _DEBUG
             std::cout << outString << "\n";
 #endif
@@ -86,12 +77,12 @@ class Logger
 
         static void LogLineBase( std::string file, int line, Severity severity, std::string string )
         {
-            //Verify file is open
-            if ( !m_s_logFile.is_open() )
-                return;
             //Check if severity passes filter
             if ( severity < m_s_filter )
                 return;
+            //Verify file is open
+            if ( !m_s_logFile.is_open() )
+                m_s_logFile.open( m_s_filePath, std::ios_base::app );
 
             //Create a variable to hold the output and preface it with the severity
             std::string outString;
@@ -121,6 +112,7 @@ class Logger
 
             //Print to the log, if in debug print to the console
             m_s_logFile << outString << "\n";
+            m_s_logFile.close();
 #ifdef _DEBUG
             std::cout << outString << "\n";
 #endif
@@ -129,6 +121,7 @@ class Logger
         static void Shutdown();
 
     private:
+        static std::filesystem::path m_s_filePath;
         static std::ofstream m_s_logFile;
         static Severity m_s_filter; 
 };

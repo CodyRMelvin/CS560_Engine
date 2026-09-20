@@ -14,6 +14,7 @@
 #include <format>     // format
 #include <filesystem> // create_directory, path
 
+std::filesystem::path Logger::m_s_filePath;
 std::ofstream Logger::m_s_logFile;
 Logger::Severity Logger::m_s_filter = Logger::severityInfo;
 
@@ -52,10 +53,8 @@ void Logger::Initialize(Severity filter)
     //Create the Logs folder if it doesn't exist
     std::filesystem::create_directory("./Logs");
     //Create the paht to the log file
-    const std::filesystem::path c_Path(c_fileName);
+    m_s_filePath = std::filesystem::path(c_fileName);
 
-    //Open and create the file and set the filter
-    m_s_logFile.open( c_Path, std::ios_base::out );
     m_s_filter = filter;
 
 }
@@ -66,4 +65,5 @@ void Logger::Shutdown()
         return;
 
     m_s_logFile.close();
+    m_s_filePath.clear();
 }
