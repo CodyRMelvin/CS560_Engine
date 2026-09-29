@@ -4,6 +4,3 @@
 [submodule "dependencies/external/glm"]
 	path = dependencies/external/glm
 	url = https://github.com/g-truc/glm.git
-[submodule "dependencies/external/ufbx"]
-	path = dependencies/external/ufbx
-	url = https://github.com/ufbx/ufbx
