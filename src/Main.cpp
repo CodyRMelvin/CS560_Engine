@@ -62,7 +62,7 @@ int main ( int argc, char* argv[] )
     {
         pathStr.erase( pathStr.begin() + size, pathStr.end() );
     }
-    pathStr += "/shaders";
+    pathStr += "/Assets/shaders";
     ShaderLibrary::CompileShaders(pathStr);
 
     //Create a pipeline object, attach the shaders, and link

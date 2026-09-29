@@ -40,7 +40,7 @@ void Mesh::InitializeMesh()
 
     //Allocate a buffer and bind it to the vao as a vertex buffer
     glCreateBuffers( 1, &m_VBO);
-    glBindBuffer( GL_ARRAY_BUFFER, m_VBO);
+    glBindBuffer( GL_ARRAY_BUFFER, m_VBO );
     //Copy data to the bound buffer
     //GL_STATIC_DRAW states that the data will be copied once and used multiple times as source- 
     //for drawing and image specification commands
