@@ -18,6 +18,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+//#define UFBX_REAL_IS_FLOAT 1
+#include <external/ufbx/ufbx.h>
 
 #include <vector>
 #include <filesystem>
@@ -26,6 +28,26 @@ void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
 {
     Logger::LogLine( Logger::severityError, "Source: {}, type: {}, id: {}, severity: {}, length: {}, message: {}, userParam: {}",
                      source, type, id, severity, length, message, userParam );
+}
+
+Mesh ReadFBXMesh( ufbx_mesh* fbxMesh )
+{
+    std::vector<Vertex> vertices;
+    std::vector<uint32_t> indices( fbxMesh->vertex_indices.data, fbxMesh->vertex_indices.data + fbxMesh->num_indices );
+
+    for( size_t j = 0; j < fbxMesh->num_vertices; ++j )
+    {
+        ufbx_vec3 uPos = ufbx_get_vertex_vec3( &fbxMesh->vertex_position, j );
+        ufbx_vec3 uNormal = ufbx_get_vertex_vec3( &fbxMesh->vertex_normal, j );
+        ufbx_vec2 uUv = ufbx_get_vertex_vec2( &fbxMesh->vertex_uv, j );
+        Vertex v;
+        v.pos = glm::vec3( uPos.x, uPos.y, uPos.z );
+        v.nrm = glm::vec3( uNormal.x, uNormal.y, uNormal.z );
+        v.tex = glm::vec2( uUv.x, uUv.y );
+        vertices.push_back(v);
+    }
+
+    return Mesh( vertices, indices );
 }
 
 int main ( int argc, char* argv[] )
@@ -62,8 +84,8 @@ int main ( int argc, char* argv[] )
     {
         pathStr.erase( pathStr.begin() + size, pathStr.end() );
     }
-    pathStr += "/Assets/shaders";
-    ShaderLibrary::CompileShaders(pathStr);
+    pathStr += "/Assets/";
+    ShaderLibrary::CompileShaders( pathStr + "shaders" );
 
     //Create a pipeline object, attach the shaders, and link
     GLuint pipeline;
@@ -88,7 +110,7 @@ int main ( int argc, char* argv[] )
     //Tell opengl this pipeline is currently being used
     glBindProgramPipeline(pipeline);
 
-    glm::vec3 v0 = glm::vec3( -0.5, -0.5,    0 );
+/*    glm::vec3 v0 = glm::vec3( -0.5, -0.5,    0 );
     glm::vec3 v1 = glm::vec3(  0.5, -0.5,    0 );
     glm::vec3 v2 = glm::vec3(    0,  0.5,    0 );
     glm::vec3 v3 = glm::vec3(    0,    0, -0.5 );
@@ -135,6 +157,32 @@ int main ( int argc, char* argv[] )
 
     //Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
     Object prism( Mesh( vertices, p_indicies ), Transform( 1, 1, 1, 0, 0, 2.5 ) ) ;
+*/    
+    ufbx_load_opts opts = {};
+    ufbx_error err;
+    ufbx_scene* scene = ufbx_load_file( ( pathStr + "fbx/fbx/roman_D.fbx" ).c_str(), &opts, &err );
+    if (!scene)
+    {
+        Logger::LogLine( Logger::severityError, "Failed to load fbx. Error: {}", err.description.data );
+        ShaderLibrary::DeleteShaders();
+        Logger::Shutdown();
+        return -1;
+    }
+
+    Mesh m;
+    for ( size_t i = 0; i < scene->nodes.count; ++i )
+    {
+        ufbx_node* node = scene->nodes.data[i];
+        if(node->is_root) continue;
+
+        if (node->mesh)
+        {
+            m = ReadFBXMesh(node->mesh);
+            break;
+        }
+    }
+
+    Object prism( m, Transform( 1, 1, 1, 0, 0, 2.5) );
     
     glEnable(GL_DEPTH);
     glEnable(GL_CULL_FACE);
@@ -227,6 +275,7 @@ int main ( int argc, char* argv[] )
     glDeleteProgramPipelines( 1, &pipeline );
     ShaderLibrary::DeleteShaders();
     prism.Destroy();
+    ufbx_free_scene(scene);
     Logger::Shutdown();
 
     return 0;
