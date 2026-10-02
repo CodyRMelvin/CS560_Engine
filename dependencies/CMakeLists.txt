@@ -10,9 +10,11 @@ target_include_directories( ${PROJECT_NAME} PRIVATE glad )
 
 add_subdirectory(external/SDL)
 add_subdirectory(external/glm)
+add_subdirectory(external/fastgltf)
 
 target_link_libraries( ${PROJECT_NAME} INTERFACE SDL3::SDL3 )
 target_link_libraries( ${PROJECT_NAME} INTERFACE glm::glm )
+target_link_libraries( ${PROJECT_NAME} INTERFACE fastgltf )
 
 include_directories(external/glm)
 

@@ -18,6 +18,8 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <fastgltf/core.hpp>
+#include <fastgltf/tools.hpp>
 
 #include <vector>
 #include <filesystem>
@@ -62,8 +64,8 @@ int main ( int argc, char* argv[] )
     {
         pathStr.erase( pathStr.begin() + size, pathStr.end() );
     }
-    pathStr += "/shaders";
-    ShaderLibrary::CompileShaders(pathStr);
+    pathStr += "/Assets";
+    ShaderLibrary::CompileShaders( pathStr + "/shaders" );
 
     //Create a pipeline object, attach the shaders, and link
     GLuint pipeline;
@@ -88,53 +90,34 @@ int main ( int argc, char* argv[] )
     //Tell opengl this pipeline is currently being used
     glBindProgramPipeline(pipeline);
 
-    glm::vec3 v0 = glm::vec3( -0.5, -0.5,    0 );
-    glm::vec3 v1 = glm::vec3(  0.5, -0.5,    0 );
-    glm::vec3 v2 = glm::vec3(    0,  0.5,    0 );
-    glm::vec3 v3 = glm::vec3(    0,    0, -0.5 );
+    fastgltf::Parser parser;
+    dir = std::filesystem::path( pathStr + "/glTF/egyptian_B.gltf" );
 
-    glm::vec3 p_triangle[] = 
+    auto gltfStream = fastgltf::GltfDataBuffer::FromPath(dir);
+    if ( gltfStream.error() != fastgltf::Error::None )
     {
-        v1, v2, v0, v0, v3, v1, v0, v2, v3, v1, v3, v2 
-    };
-
-    std::vector<uint32_t> p_indicies = 
-    {
-        //Back face
-        0, 1, 2,
-        //Bottom face
-        3, 4, 5, 
-        //left face
-        6, 7, 8, 
-        //right face
-        9, 10, 11 
-    };
-
-    glm::vec3 norm0 = glm::cross( p_triangle[1] - p_triangle[0], p_triangle[2] - p_triangle[0] );
-    glm::vec3 norm1 = glm::cross( p_triangle[4] - p_triangle[5], p_triangle[3] - p_triangle[5] );
-    glm::vec3 norm2 = glm::cross( p_triangle[7] - p_triangle[8], p_triangle[6] - p_triangle[8] );
-    glm::vec3 norm3 = glm::cross( p_triangle[10] - p_triangle[11], p_triangle[9] - p_triangle[11] );
-
-    glm::vec3 p_normals[] =
-    {
-        norm0, norm0, norm0,
-        norm1, norm1, norm1, 
-        norm2, norm2, norm2,
-        norm3, norm3, norm3
-    };
-
-    std::vector<Vertex> vertices;
-    for( uint32_t i = 0; i < glm::countof(p_triangle); ++i )
-    {
-        Vertex v;
-        v.pos = p_triangle[i];
-        v.nrm = p_normals[i];
-        v.tex = glm::vec2( 0, 0 );
-        vertices.push_back(v);
+        Logger::LogLine( Logger::severityError, "Failed to read gltf. Error number {}", static_cast<uint64_t>( gltfStream.error() ) );
+        return -1;
     }
 
-    //Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
-    Object prism( Mesh( vertices, p_indicies ), Transform( 1, 1, 1, 0, 0, 2.5 ) ) ;
+    auto asset = parser.loadGltf( gltfStream.get(), dir.parent_path(), fastgltf::Options::None );
+    if ( asset.error() != fastgltf::Error::None )
+    {
+        Logger::LogLine( Logger::severityError, "Failed to parse gltf. Error number {}", static_cast<uint64_t>( gltfStream.error() ) );
+        return -1;
+    }
+
+    std::vector<Object> objects;
+
+    fastgltf::iterateSceneNodes( asset.get(), 0, fastgltf::math::fmat4x4(), 
+    [&]( fastgltf::Node& node, const fastgltf::math::fmat4x4& matrix )
+    {
+        if ( node.meshIndex.has_value() )
+        {
+            fastgltf::Mesh gltfMesh = asset->meshes[*node.meshIndex];
+            fastgltf::Primitive positions = gltfMesh.primitives.front();
+        }
+    });
     
     glEnable(GL_DEPTH);
     glEnable(GL_CULL_FACE);
