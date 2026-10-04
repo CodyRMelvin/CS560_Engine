@@ -12,7 +12,7 @@
 Transform::Transform()
     : m_scale(1)
     , m_translation(0)
-    , m_rotation(0)
+    , m_rotation()
     , m_isDirty(false)
     , m_matrix(0)
 {}
@@ -20,7 +20,7 @@ Transform::Transform()
 Transform::Transform(glm::vec3 scale)
     : m_scale(scale)
     , m_translation(0)
-    , m_rotation(0)
+    , m_rotation()
     , m_isDirty(true)
     , m_matrix(0)
 {}
@@ -28,7 +28,7 @@ Transform::Transform(glm::vec3 scale)
 Transform::Transform( float scaleX, float scaleY, float scaleZ )
     : m_scale( scaleX, scaleY, scaleZ )
     , m_translation(0)
-    , m_rotation(0)
+    , m_rotation()
     , m_isDirty(true)
     , m_matrix(0)
 {}
@@ -36,7 +36,7 @@ Transform::Transform( float scaleX, float scaleY, float scaleZ )
 Transform::Transform( glm::vec3 scale, glm::vec3 translation )
     : m_scale(scale)
     , m_translation(translation)
-    , m_rotation(0)
+    , m_rotation()
     , m_isDirty(true)
     , m_matrix(0)
 {}
@@ -44,7 +44,7 @@ Transform::Transform( glm::vec3 scale, glm::vec3 translation )
 Transform::Transform( float scaleX, float scaleY, float scaleZ, float translationX, float translationY, float translationZ )
     : m_scale( scaleX, scaleY, scaleZ )
     , m_translation( translationX, translationY, translationZ )
-    , m_rotation(0)
+    , m_rotation()
     , m_isDirty(true)
     , m_matrix(0)
 {}
@@ -52,7 +52,7 @@ Transform::Transform( float scaleX, float scaleY, float scaleZ, float translatio
 Transform::Transform( glm::vec3 scale, glm::vec3 translation, glm::vec3 rotAxis, float rotRadians )
     : m_scale(scale)
     , m_translation(translation)
-    , m_rotation( glm::normalize(rotAxis), rotRadians )
+    , m_rotation( rotRadians, glm::normalize(rotAxis) )
     , m_isDirty(true)
     , m_matrix(0)
 {}
@@ -63,8 +63,7 @@ glm::mat4 Transform::Matrix()
         return m_matrix;
 
     m_matrix = glm::translate( glm::mat4(1), m_translation ) * 
-              glm::rotate( glm::mat4(1), m_rotation.w, glm::vec3(m_rotation) ) * 
-              glm::scale( glm::mat4(1), m_scale );
+               m_rotation.RotationMatrix() * glm::scale( glm::mat4(1), m_scale );
 
     return m_matrix;
 }
