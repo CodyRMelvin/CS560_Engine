@@ -6,6 +6,6 @@ out vec4 color;
 void main ()
 {
     vec3 n = normalize(cameraNormal);
-    float shade = max( 0, n.z );
+    float shade = max( max(0, n.z), max(n.x, n.y) );
     color = vec4( shade, 0, 0, 1 );
 }

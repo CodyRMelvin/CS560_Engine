@@ -27,7 +27,7 @@ class Object
 
         void Destroy();
         // Stubs for later use
-        void Render() const;
+        void Render( GLuint program );
         void Deserialize(std::filesystem::directory_entry source);
 };
 

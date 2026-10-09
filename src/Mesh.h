@@ -10,6 +10,7 @@
 #define MESH_H
 
 #include "Math.h"
+#include "Transform.h"
 
 #include <glad/glad.h>
 
@@ -25,7 +26,7 @@ class Mesh
         Mesh( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices );
         ~Mesh() = default;
 
-        void Draw() const;
+        void Draw( Transform& transform ) const;
         void Destroy();
 
     private:

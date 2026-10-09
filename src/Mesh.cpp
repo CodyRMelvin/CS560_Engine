@@ -26,9 +26,10 @@ void Mesh::Destroy()
     m_VBO = 0;
 }
 
-void Mesh::Draw() const
+void Mesh::Draw( Transform& transform ) const
 {
     glBindVertexArray(m_VAO);
+    glUniformMatrix4fv( 0, 1, GL_FALSE, glm::value_ptr( transform.Matrix() ) );
     glDrawElements( GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0 );
     glBindVertexArray(0);
 }

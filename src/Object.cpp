@@ -5,6 +5,7 @@
 // Brief  : Implementation for class encapsulating 3D object data 
 //**************************************************************************************************
 
+#include "Shader.h"
 #define UNUSED(x) (void)(x)
 #include "Object.h"
 
@@ -18,9 +19,11 @@ void Object::Destroy()
     mesh.Destroy();
 }
 
-void Object::Render() const
+void Object::Render( GLuint program )
 {
-
+    glUseProgram(program);
+    mesh.Draw(transform);
+    glUseProgram(0);
 }
 
 void Object::Deserialize(std::filesystem::directory_entry source)
