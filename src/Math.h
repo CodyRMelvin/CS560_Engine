@@ -11,6 +11,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "Quaternion.h"
+
 struct Vertex
 {
     glm::vec3 pos;

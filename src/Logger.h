@@ -21,6 +21,7 @@ class Logger
     public:
         enum Severity
         {
+            severityInvalid = -1,
             severityInfo,
             severityWarning,
             severityError    
@@ -51,6 +52,8 @@ class Logger
                     break;
                 case severityError:
                     outString += "Error: ";
+                    break;
+                default:
                     break;
             }
 
@@ -96,6 +99,8 @@ class Logger
                     break;
                 case severityError:
                     outString += "Error: ";
+                    break;
+                default:
                     break;
             }
 

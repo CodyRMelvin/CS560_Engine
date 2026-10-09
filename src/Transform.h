@@ -9,7 +9,7 @@
 #ifndef TRANSFORM_H
 #define TRANSFORM_H
 
-#include "glm/glm.hpp"
+#include "Math.h"
 
 class Transform
 {
@@ -24,7 +24,7 @@ class Transform
 
         inline glm::vec3 Scale() const { return m_scale; }
         inline glm::vec3 Translation() const { return m_translation; }
-        inline glm::vec4 Rotation() const { return m_rotation; }
+        inline Quat Rotation() const { return m_rotation; }
 
         inline void Scale(glm::vec3 scale) 
         { 
@@ -50,15 +50,9 @@ class Transform
             m_isDirty = true;
         }
 
-        inline void Rotation(glm::vec4 rotation) 
-        { 
-            m_rotation = glm::vec4( glm::normalize( glm::vec3(rotation) ), rotation.w ); 
-            m_isDirty = true; 
-        }
-
         inline void Rotation( glm::vec3 axis, float radians ) 
         { 
-            m_rotation = glm::vec4( glm::normalize(axis), radians ); 
+            m_rotation = Quat( radians, glm::normalize(axis) ); 
             m_isDirty = true; 
         }
 
@@ -68,7 +62,7 @@ class Transform
     private:
         glm::vec3 m_scale;
         glm::vec3 m_translation;
-        glm::vec4 m_rotation;
+        Quat m_rotation;
 
         bool m_isDirty;
         glm::mat4 m_matrix;

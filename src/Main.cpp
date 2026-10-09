@@ -16,18 +16,108 @@
 #include "Object.h"
 
 #include <glad/glad.h>
+<<<<<<< HEAD
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <fastgltf/core.hpp>
 #include <fastgltf/tools.hpp>
+=======
+>>>>>>> main
 
 #include <vector>
 #include <filesystem>
 
 void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
-    Logger::LogLine( Logger::severityError, "Source: {}, type: {}, id: {}, severity: {}, length: {}, message: {}, userParam: {}",
-                     source, type, id, severity, length, message, userParam );
+    Logger::Severity sev = Logger::severityInvalid;
+
+    switch(severity)
+    {
+        case GL_DEBUG_SEVERITY_HIGH:
+            sev = Logger::severityError;
+            break;
+
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            sev = Logger::severityError;
+            break;
+
+        case GL_DEBUG_SEVERITY_LOW:
+            sev = Logger::severityWarning;
+            break;
+
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            sev = Logger::severityInfo;
+            break;
+
+        default:
+            break;
+    }
+
+    std::string sourceStr;
+
+    switch(source)
+    {
+        case GL_DEBUG_SOURCE_API:
+            sourceStr = "API";
+            break;
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            sourceStr = "Window system";
+            break;
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            sourceStr = "Shader compiler";
+            break;
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            sourceStr = "Third party";
+            break;
+        case GL_DEBUG_SOURCE_APPLICATION:
+            sourceStr = "Application";
+            break;
+        case GL_DEBUG_SOURCE_OTHER:
+            sourceStr = "Other";
+            break;
+
+        default:
+            break;
+    }
+
+    std::string typeStr;
+
+    switch (type)
+    {
+        case GL_DEBUG_TYPE_ERROR:               
+            typeStr = "Error";
+            break;
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: 
+            typeStr = "Deprecated behavior";
+            break;
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:   
+            typeStr = "Undefined behavior";
+            break;
+        case GL_DEBUG_TYPE_PORTABILITY:         
+            typeStr = "Portability";
+            break;
+        case GL_DEBUG_TYPE_PERFORMANCE:         
+            typeStr = "Performance";
+            break;
+        case GL_DEBUG_TYPE_MARKER:              
+            typeStr = "Marker";
+            break;
+        case GL_DEBUG_TYPE_PUSH_GROUP:          
+            typeStr = "Push group";
+            break;
+        case GL_DEBUG_TYPE_POP_GROUP:           
+            typeStr = "Pop group";
+            break;
+        case GL_DEBUG_TYPE_OTHER:               
+            typeStr = "Other";
+            break;
+
+        default:
+            break;
+    }
+
+    Logger::LogLine( sev, "Source: {}, type: {}, id: {}, length: {}, message: {}, userParam: {}",
+                     sourceStr, typeStr, id, length, message, userParam );
 }
 
 int main ( int argc, char* argv[] )
@@ -120,6 +210,10 @@ int main ( int argc, char* argv[] )
     });
     
     glEnable(GL_DEPTH);
+
+    //Object prism( Mesh( vertices, p_indicies), Transform( 1, 1, 1, 0, 0, 2.5 ) );
+
+    glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
     Camera cam( 70.f, 4.f / 3.f, .1f, 10.f, glm::vec4( 0, 1, 0, 0 ), 
