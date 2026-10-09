@@ -52,14 +52,14 @@ float Quat::Dot( const Quat& other ) const
     return glm::dot( V, other.V ) + S * other.S;
 }
 
-float Quat::Norm() const
+float Quat::MagnitudeSquared() const
 {
     return x * x + y * y + z * z + w * w;
 }
 
 float Quat::Magnitude() const
 {
-    return std::sqrt( Norm() );
+    return std::sqrt( MagnitudeSquared() );
 }
 
 Quat Quat::Conjugate() const
@@ -69,7 +69,7 @@ Quat Quat::Conjugate() const
 
 Quat Quat::Inverse() const
 {
-    float n = Norm();
+    float n = MagnitudeSquared();
     return Quat( glm::vec4( S / n,  -V / n)  );
 }
 
@@ -98,7 +98,7 @@ void Quat::Conjugated()
 
 void Quat::Inverted()
 {
-    float n = Norm();
+    float n = MagnitudeSquared();
     S /= n;
     V /= -n;
 }

@@ -52,7 +52,7 @@ class Quat
 
         // Non-editing mathematical functions
         float Dot( const Quat& other ) const;
-        float Norm() const;
+        float MagnitudeSquared() const;
         float Magnitude() const;
         Quat Conjugate() const;
         Quat Inverse() const;
@@ -96,14 +96,14 @@ inline float Dot( const Quat& lhs, const Quat& rhs )
     return glm::dot( lhs.V, rhs.V ) + lhs.S * rhs.S;
 }
 
-inline float Norm( const Quat& q )
+inline float MagnitudeSquared( const Quat& q )
 {
     return q.x * q.x + q.y * q.y + q.z * q.z + q.w + q.w;
 }
 
 inline float Magnitude( const Quat& q )
 {
-    return std::sqrt( Norm(q) );
+    return std::sqrt( MagnitudeSquared(q) );
 }
 
 inline Quat Conjugate( const Quat& q )
@@ -114,7 +114,7 @@ inline Quat Conjugate( const Quat& q )
 
 inline Quat Invert( const Quat& q )
 {
-    float n = Norm(q);
+    float n = MagnitudeSquared(q);
     return Quat( glm::vec4( q.S / n, -q.V / n ) );
 }
 
