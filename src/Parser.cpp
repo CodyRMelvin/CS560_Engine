@@ -9,6 +9,7 @@
 #include "Mesh.h"
 
 #include "fastgltf/core.hpp"
+#include "fastgltf/types.hpp"
 
 fastgltf::Parser Parser::m_parser;
 
@@ -66,6 +67,11 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     m_opened = true;
 }
 
+[[nodiscard]] std::expected< Mesh, Error > Parser::ReadMesh( fastgltf::Mesh& mesh ) const
+{
+    return std::unexpected( Error("Unknown error") );
+}
+
 [[nodiscard]] bool Parser::ReadMeshes( std::vector<Mesh>& meshes )
 {
     for ( const auto& mesh : m_asset.meshes )
@@ -107,7 +113,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 continue;
 
             fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, posAccessor, 
-            [&vertices]( fastgltf::math::fvec3 pos, std::size_t idx )
+            [&]( fastgltf::math::fvec3 pos, std::size_t idx )
             {
                 Vertex v;
                 v.pos = glm::vec3( pos.x(), pos.y(), pos.z() );
@@ -159,12 +165,25 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 return false;
             }
 
-            indices.reserve(indexAccessor.count);
-            fastgltf::iterateAccessorWithIndex<uint32_t>( m_asset, indexAccessor, 
-            [&indices]( uint32_t index, size_t idx )
+            if ( indexAccessor.componentType == fastgltf::ComponentType::UnsignedByte 
+                 || indexAccessor.componentType == fastgltf::ComponentType::UnsignedShort ) 
             {
-                indices.push_back(index);
-            });
+                indices.reserve(indexAccessor.count);
+                fastgltf::iterateAccessorWithIndex<uint16_t>( m_asset, indexAccessor, 
+                [&indices]( uint16_t index, size_t idx )
+                {
+                    indices.push_back( static_cast<uint32_t>(index) );
+                });
+            }
+            else
+            {
+                indices.reserve(indexAccessor.count);
+                fastgltf::iterateAccessorWithIndex<uint32_t>( m_asset, indexAccessor, 
+                [&indices]( uint32_t index, size_t idx )
+                {
+                    indices.push_back(index);
+                });
+            }
 
         }
 
