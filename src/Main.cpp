@@ -5,25 +5,18 @@
 // Brief  : Entry point of program
 //**************************************************************************************************
 
-#include "fastgltf/types.hpp"
-#define WIRE 0
-#define FLATSHADE 0
+#define FLATSHADE 1
 
-#include "Logger.h"
+#include "Common.h"
 #include "ShaderLibrary.h"
 #include "Camera.h"
-#include "Math.h"
 #include "Window.h"
 #include "Object.h"
+#include "Parser.h"
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "fastgltf/core.hpp"
-#include "fastgltf/tools.hpp"
-
-#include <vector>
-#include <filesystem>
 
 void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
@@ -179,142 +172,36 @@ int main ( int argc, char* argv[] )
     //Tell opengl this pipeline is currently being used
     glBindProgramPipeline(pipeline);
 
-    fastgltf::Parser parser;
-    dir = std::filesystem::path( pathStr + "/glTF/roman_D_out/roman_D.gltf" );
-
-    auto gltfStream = fastgltf::GltfDataBuffer::FromPath(dir);
-    if ( gltfStream.error() != fastgltf::Error::None )
+    dir = std::filesystem::path( pathStr + "/glTF/roman_D_out/roman_D.gltf" );   
+    Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
+    if (!parser)
     {
-        Logger::LogLine( Logger::severityError, "Failed to read gltf. Error number {}", static_cast<uint64_t>( gltfStream.error() ) );
+        Logger::LogLine( Logger::severityError, "Failed to construct parser" );
         return -1;
     }
 
-
-    auto asset = parser.loadGltf( gltfStream.get(), dir.parent_path(), fastgltf::Options::LoadExternalBuffers );
-    if ( asset.error() != fastgltf::Error::None )
+    std::vector<Mesh> meshes;
+    if ( !parser.ReadMeshes(meshes) )
     {
-        Logger::LogLine( Logger::severityError, "Failed to parse gltf. Error number {}", static_cast<uint64_t>( gltfStream.error() ) );
+        Logger::LogLine( Logger::severityError, "Failed to parse meshes" );
         return -1;
     }
 
-    std::vector<Object> objects;
-
-    for ( const auto& mesh : asset->meshes )
-    {
-        for ( auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it )
-        {
-            const auto* posIt =  it->findAttribute("POSITION"); 
-            assert( posIt != it->attributes.end() );
-            assert( it->indicesAccessor.has_value() );
-
-            size_t baseColorTexcoordIndex = 0;
-            auto index = std::distance( mesh.primitives.begin(), it );
-            if ( it->materialIndex.has_value() )
-            {
-                auto& material = asset->materials[ it->materialIndex.value() ];
-                auto& baseColorTexture = material.pbrData.baseColorTexture;
-                if ( baseColorTexture.has_value() )
-                {
-                    auto& texture = asset->textures[baseColorTexture->textureIndex];
-                    if ( !texture.imageIndex.has_value() )
-                    {
-                        Logger::LogLine( Logger::severityError, "Mesh {} in file {} has no image index", 
-                                         std::distance( mesh.primitives.begin(), it ), dir.parent_path().string() );
-                        return -1;
-                    }
-
-                    if ( baseColorTexture->transform && baseColorTexture->transform->texCoordIndex.has_value() )
-                        baseColorTexcoordIndex = baseColorTexture->transform->texCoordIndex.value();
-                    else
-                        baseColorTexcoordIndex = material.pbrData.baseColorTexture->texCoordIndex;
-                }
-            }
-
-            auto& posAccessor = asset->accessors[posIt->accessorIndex]; 
-            if ( !posAccessor.bufferViewIndex.has_value() )
-                continue;
-
-            std::vector<Vertex> vertices;
-            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( asset.get(), posAccessor, 
-            [&vertices]( fastgltf::math::fvec3 pos, std::size_t idx )
-            {
-                Vertex v;
-                v.pos = glm::vec3( pos.x(), pos.y(), pos.z() );
-                v.nrm = glm::vec3();
-                v.tex = glm::vec2();
-                vertices.push_back(v);
-            });
-
-            const auto* texcoordAttribute = it->findAttribute( std::string("TEXCOORD_") + std::to_string(baseColorTexcoordIndex) );  
-            if ( texcoordAttribute != it->attributes.end() ) 
-            {
-                auto& texCoordAccessor = asset->accessors[texcoordAttribute->accessorIndex];
-                if ( !texCoordAccessor.bufferViewIndex.has_value() )
-                    continue;
-
-                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>( asset.get(), texCoordAccessor,
-                [&vertices]( fastgltf::math::fvec2 uv, size_t idx )
-                {
-                    if( vertices.capacity() < idx )
-                        vertices.resize( vertices.capacity() * 3 / 2 );
-
-                    vertices[idx].tex = glm::vec2( uv.x(), uv.y() );
-                }); 
-            }
-
-            const auto* normalAttribute = it->findAttribute("NORMAL"); 
-            if ( normalAttribute != it->attributes.end() )
-            {
-                auto& normalAccessor = asset->accessors[normalAttribute->accessorIndex];
-                if ( !normalAccessor.bufferViewIndex.has_value() )
-                    continue;
-
-                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( asset.get(), normalAccessor,
-                [&vertices]( fastgltf::math::fvec3 nrm, size_t idx )
-                {
-                    if( vertices.capacity() < idx )
-                        vertices.resize( vertices.capacity() * 3 / 2 );
-
-                    vertices[idx].nrm = glm::vec3( nrm.x(), nrm.y(), nrm.z() );
-                }); 
-
-            }
-
-            auto& indexAccessor = asset->accessors[ it->indicesAccessor.value() ];
-            if ( !indexAccessor.bufferViewIndex.has_value() )
-            {
-                Logger::LogLine( Logger::severityError, "Mesh {} in file {} has no indices buffer view", 
-                                 std::distance( mesh.primitives.begin(), it ), dir.parent_path().string() );
-                return -1;
-            }
-
-            std::vector<uint32_t> indices;
-            indices.reserve(indexAccessor.count);
-
-            fastgltf::iterateAccessorWithIndex<uint32_t>( asset.get(), indexAccessor, 
-            [&indices]( uint32_t index, size_t idx )
-            {
-                indices.push_back(index);
-            });
-
-            objects.emplace_back( Mesh( vertices, indices ), Transform( 1, 1, 1, 0, -1, 2 ) );
-        }
-    }
-
+    Object obj( meshes[0], Transform( 1, 1, 1 ) );
     
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
 
-    Camera cam( 70.f, 4.f / 3.f, .1f, 10.f, glm::vec4( 0, 1, 0, 0 ), 
-                glm::vec4( 0, 0, 0, 1 ), glm::vec4( 0, 0, 1, 0 ) );
+    Camera cam = Camera().SetViewingDimensions( 90.f, 4.f / 3.f )
+                         .SetPlaneDistances( .1f, 100.f )
+                         .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
 
     glUseProgram( vs.Program() );
 #if FLATSHADE
     glm::mat4 normalMatrix = cam.Model();
     normalMatrix[3][0] = normalMatrix[3][1] = 0;
     normalMatrix = AffineInverse(normalMatrix);
-    normalMatrix = glm::transpose(normalMatrix);
+    //normalMatrix = glm::transpose(normalMatrix);
 
     glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
 #endif
@@ -331,7 +218,8 @@ int main ( int argc, char* argv[] )
 
         //for ( Object& obj : objects )
             //obj.Render(vs.Program());
-        objects[0].Render( vs.Program() );
+        obj.Render( vs.Program() );
+        //obj2.Render( vs.Program() );
 
         glFlush();
 
@@ -357,13 +245,13 @@ int main ( int argc, char* argv[] )
                         cam.Strafe(-.05);
                     
                     if (e.key.key == SDLK_UP)
-                        cam.Rotate( { 1, 0, 0 }, -.02 );
+                        cam.Rotate( { 1, 0, 0 }, -.05 );
                     else if (e.key.key == SDLK_DOWN)
-                        cam.Rotate( { 1, 0, 0 }, .02 );
+                        cam.Rotate( { 1, 0, 0 }, .05 );
                     else if (e.key.key == SDLK_LEFT)
-                        cam.Rotate( { 0, 1, 0 }, -.02 );
+                        cam.Rotate( { 0, 1, 0 }, -.05 );
                     else if (e.key.key == SDLK_RIGHT)
-                        cam.Rotate( { 0, 1, 0 }, .02 );
+                        cam.Rotate( { 0, 1, 0 }, .05 );
 
                     if ( e.key.key == SDLK_Q )
                     {
@@ -376,7 +264,7 @@ int main ( int argc, char* argv[] )
                     
 
                     glUseProgram( vs.Program() );
-                    glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( cam.Model() ) );
+                    glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( cam.View() ) );
                     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( cam.Perspective() ) );
                     glUseProgram(0);
                     break;
@@ -387,8 +275,9 @@ int main ( int argc, char* argv[] )
     //Delete the program, vertex buffer, and vao
     glDeleteProgramPipelines( 1, &pipeline );
     ShaderLibrary::DeleteShaders();
-    for ( Object& obj : objects )
+    //for ( Object& obj : objects )
         obj.Destroy();
+
     Logger::Shutdown();
 
     return 0;

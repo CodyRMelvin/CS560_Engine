@@ -76,7 +76,7 @@ Quat Quat::Inverse() const
 glm::vec3 Quat::Rotate( const glm::vec3& v ) const
 {
     Quat qv( glm::vec4( 0, v ) );
-    return ( *this * qv * this->Conjugate() ).V;
+    return ( *this * qv * this->Inverse() ).V;
 }
 
 glm::mat4 Quat::RotationMatrix() const

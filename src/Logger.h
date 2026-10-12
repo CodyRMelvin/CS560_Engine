@@ -1,9 +1,13 @@
 //**************************************************************************************************
-// File   : Logger.hpp
+// File   : Logger.h
 // Author : Cody Melvin
 // Date   : 2025/07/01
 // Brief  : Header for system to log info to file and command line output
 //**************************************************************************************************
+
+#pragma once
+#ifndef LOGGER_H
+#define LOGGER_H
 
 #include <format>   // format_string, format
 #include <fstream>  // ofstream
@@ -130,3 +134,5 @@ class Logger
         static std::ofstream m_s_logFile;
         static Severity m_s_filter; 
 };
+
+#endif

@@ -8,26 +8,23 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
-#include <glm/glm.hpp>
+#include "Common.h"
 
 class Camera
 {
     public:
         Camera();
-        Camera( float fov, float aspectRatio, float near, float far, 
-                glm::vec4 genUp, glm::vec4 eye, glm::vec4 lookAt );
         Camera(const Camera& other);
         void operator=(const Camera& other);
         
-        void SetViewingDimensions( float fov, float aspectRatio );
-        void SetPlaneDistances( float near, float far );
-        void SetOrigin(glm::vec4 eye);
-        void SetOrientation( glm::vec4 genUp, glm::vec4 lookAt );
+        Camera& SetViewingDimensions( float fov, float aspectRatio );
+        Camera& SetPlaneDistances( float near, float far );
+        Camera& LookAt( glm::vec3 position, glm::vec3 lookAt, glm::vec3 up );
 
-        glm::vec4 Origin() const;
-        glm::vec4 Up() const;
-        glm::vec4 Right() const;
-        glm::vec4 Back() const;
+        glm::vec3 Origin() const;
+        glm::vec3 Up() const;
+        glm::vec3 Right() const;
+        glm::vec3 Back() const;
         glm::vec3 Viewport() const;
         float Near() const;
         float Far() const;
@@ -43,8 +40,8 @@ class Camera
         glm::mat4 Perspective() const;
 
     private:
-        glm::vec4 m_eye;
-        glm::vec4 m_right, m_back, m_up;
+        glm::vec3 m_center;
+        glm::vec3 m_right, m_back, m_up;
         float m_vpDistance, m_nearDistance, m_farDistance, m_vpWidth, m_vpHeight;
 };
 
