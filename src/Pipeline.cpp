@@ -7,6 +7,7 @@
 
 #include "Pipeline.h"
 #include "Shader.h"
+#include "glm/gtc/type_ptr.hpp"
 
 Pipeline::Pipeline( const Pipeline& other )
     : m_pipeline(other.m_pipeline)
@@ -86,6 +87,26 @@ void Pipeline::ActiveShader( const Shader::ShaderType type ) const
     class Shader s = m_shaders[type];
     if (s)
         glActiveShaderProgram( m_pipeline, s.Program() );
+}
+
+void Pipeline::UniformMat( int location, const glm::mat4& uniform ) const
+{
+    glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(uniform) );
+}
+
+template <size_t S> void Pipeline::UniformVec( int location, glm::vec< S, float > uniform ) const
+{
+    glUniform4fv( location, S, glm::value_ptr(uniform) );
+}
+
+void Pipeline::UniformFloat( int location, float uniform ) const
+{
+    glUniform1f( location, uniform );
+}
+
+void Pipeline::UniformInt( int location, int uniform ) const
+{
+    glUniform1i( location, uniform );
 }
 
 bool Pipeline::IsValid() const

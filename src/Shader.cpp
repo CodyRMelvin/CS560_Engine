@@ -166,11 +166,6 @@ void Shader::Destroy()
     m_program = 0;
 }
 
-void Shader::Link() const
-{
-    glLinkProgram(m_program);
-}
-
 bool Shader::Verify() const
 {
     //Check the compile status of the shader

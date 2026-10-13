@@ -114,13 +114,16 @@ void Application::Run()
 {
     pipeline.Bind();
     pipeline.ActiveShader(Shader::shaderTypeVertex);
-    glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
-    glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
+    pipeline.UniformMat( 1, m_activeCamera.View() );
+    pipeline.UniformMat( 2, m_activeCamera.Perspective() );
+    //glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
+    //glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
     glm::mat4 normalMatrix = m_activeCamera.Model();
     normalMatrix[3][0] = normalMatrix[3][1] = 0;
     normalMatrix = AffineInverse(normalMatrix);
     normalMatrix = glm::transpose(normalMatrix);
-    glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
+    pipeline.UniformMat( 3, normalMatrix );
+    //glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
 
     SDL_Event e;
     Logger::LogLine( Logger::severityInfo, "Beginning program loop" );
@@ -172,13 +175,14 @@ void Application::Run()
                         SDL_PushEvent(&eQuit);
                     }
 
-                    glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
-                    glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
+                    pipeline.UniformMat( 1, m_activeCamera.View() );
+                    pipeline.UniformMat( 2, m_activeCamera.Perspective() );
                     glm::mat4 normalMatrix = m_activeCamera.Model();
+
                     normalMatrix[3][0] = normalMatrix[3][1] = 0;
                     normalMatrix = AffineInverse(normalMatrix);
                     normalMatrix = glm::transpose(normalMatrix);
-                    glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
+                    pipeline.UniformMat( 3, normalMatrix );
                     break;
             }
         }

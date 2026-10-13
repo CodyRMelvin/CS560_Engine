@@ -37,9 +37,7 @@ class Shader
         void LoadShader(std::string path);
         void Destroy();
 
-        void Link() const;
         bool Verify() const;
-
         bool IsValid() const;
         operator bool() const;
 
