@@ -19,8 +19,25 @@ Shader::Shader()
     , m_type(shaderTypeInvalid)
 { }
 
+Shader::Shader( const Shader& other )
+    : m_shader(other.m_shader)
+    , m_program(other.m_program)
+    , m_name(other.m_name)
+    , m_type(other.m_type)
+{ }
+
 Shader::~Shader()
 { }
+
+Shader& Shader::operator=( const Shader& other )
+{
+    m_shader = other.m_shader;
+    m_program = other.m_program;
+    m_name = other.m_name;
+    m_type = other.m_type;
+
+    return *this;
+}
 
 void Shader::LoadShader(std::filesystem::directory_entry path)
 {
@@ -146,6 +163,7 @@ void Shader::Destroy()
 {
     glDeleteShader(m_shader);
     glDeleteProgram(m_program);
+    m_program = 0;
 }
 
 void Shader::Link() const
@@ -184,3 +202,54 @@ bool Shader::Verify() const
     delete[] errorMSG;
     return false;
 }
+
+bool Shader::IsValid() const
+{
+    glValidateProgram(m_program);
+    GLint check;
+    glGetProgramiv( m_program, GL_VALIDATE_STATUS, &check );
+    bool b = check == GL_TRUE;
+    glGetProgramiv( m_program, GL_LINK_STATUS, &check );
+    b &= check == GL_TRUE;
+    return b;
+}
+
+Shader::operator bool() const
+{
+    return IsValid();
+}
+
+GLenum Shader::GLenumType() const
+{
+    switch(m_type)
+    {
+        case shaderTypeVertex:
+            return GL_VERTEX_SHADER;
+        case shaderTypeFragment:
+            return GL_FRAGMENT_SHADER;
+        case shaderTypeCompute:
+            return GL_COMPUTE_SHADER;
+        case shaderTypeGeometry:
+            return GL_GEOMETRY_SHADER;
+        default:
+            return 0;
+    }
+}
+
+GLbitfield Shader::Stage() const
+{
+    switch(m_type)
+    {
+        case shaderTypeVertex:
+            return GL_VERTEX_SHADER_BIT;
+        case shaderTypeFragment:
+            return GL_FRAGMENT_SHADER_BIT;
+        case shaderTypeCompute:
+            return GL_COMPUTE_SHADER_BIT;
+        case shaderTypeGeometry:
+            return GL_GEOMETRY_SHADER_BIT;
+        default:
+            return 0;
+    }
+}
+

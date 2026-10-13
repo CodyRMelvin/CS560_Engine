@@ -13,8 +13,7 @@
 #include "Object.h"
 #include "Mesh.h"
 #include "Camera.h"
-#include <immintrin.h>
-#include <stdexcept>
+#include "Pipeline.h"
 #ifdef _DEBUG
 #include "Debug.h"
 #endif
@@ -23,7 +22,7 @@
 #include "SDL3/SDL.h"
 
 static Object obj;
-static GLuint pipeline;
+static Pipeline pipeline;
 
 Application::Application()
     : m_window()
@@ -63,17 +62,28 @@ void Application::Initialize()
     ShaderLibrary::CompileShaders( pathStr + "/shaders" );
 
     //Create a pipeline object, attach the shaders, and link
-    glGenProgramPipelines( 1, &pipeline );
-
-    Shader vs = ShaderLibrary::GetShader("FlatShade", Shader::shaderTypeVertex );
-    vs.Link();
-    glUseProgramStages( pipeline, GL_VERTEX_SHADER_BIT, vs.Program() );
-    Shader fs = ShaderLibrary::GetShader("FlatShade", Shader::shaderTypeFragment);
-    fs.Link();
-    glUseProgramStages( pipeline, GL_FRAGMENT_SHADER_BIT, fs.Program() );
+    pipeline.Initialize(); 
+    pipeline.Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeVertex ) )
+            .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
 
     //Tell opengl this pipeline is currently being used
-    glBindProgramPipeline(pipeline);
+    pipeline.Bind();
+    if(!pipeline)
+    {
+
+        GLint logLength;
+        glGetProgramPipelineiv(pipeline.GLPipeline(), GL_INFO_LOG_LENGTH, &logLength);
+        if ( logLength > 0 )
+        {
+            std::vector<char> log(logLength);
+            glGetProgramPipelineInfoLog(pipeline.GLPipeline(), logLength, nullptr, log.data());    
+            std::runtime_error e( std::format( "Failed to construct pipeline: {}", log.data() ) );
+            throw(e);
+        }
+
+        std::runtime_error e("Failed to construct pipeline");
+        throw(e);
+    }
 
     dir = std::filesystem::path( pathStr + "/glTF/roman_D_out/roman_D.gltf" );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
@@ -102,8 +112,8 @@ void Application::Initialize()
 
 void Application::Run()
 {
-    Shader vs = ShaderLibrary::GetShader("FlatShade", Shader::shaderTypeVertex );
-    glUseProgram( vs.Program() );
+    pipeline.Bind();
+    pipeline.ActiveShader(Shader::shaderTypeVertex);
     glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
     glm::mat4 normalMatrix = m_activeCamera.Model();
@@ -111,7 +121,6 @@ void Application::Run()
     normalMatrix = AffineInverse(normalMatrix);
     normalMatrix = glm::transpose(normalMatrix);
     glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
-    glUseProgram(0);
 
     SDL_Event e;
     Logger::LogLine( Logger::severityInfo, "Beginning program loop" );
@@ -121,7 +130,7 @@ void Application::Run()
         glClearColor( 0, 0, 1, 1 );
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-        obj.Render( vs.Program() );
+        obj.Render( pipeline.Shader(Shader::shaderTypeVertex).Program() );
 
         glFlush();
 
@@ -163,7 +172,6 @@ void Application::Run()
                         SDL_PushEvent(&eQuit);
                     }
 
-                    glUseProgram( vs.Program() );
                     glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
                     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
                     glm::mat4 normalMatrix = m_activeCamera.Model();
@@ -171,7 +179,6 @@ void Application::Run()
                     normalMatrix = AffineInverse(normalMatrix);
                     normalMatrix = glm::transpose(normalMatrix);
                     glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
-                    glUseProgram(0);
                     break;
             }
         }
@@ -182,10 +189,12 @@ void Application::Run()
 void Application::Shutdown()
 {
     Logger::LogLine( Logger::severityInfo, "Shutting down application" );
-    //Delete the program, vertex buffer, and vao
-    glDeleteProgramPipelines( 1, &pipeline );
-    ShaderLibrary::DeleteShaders();
+
+    //Temporary, static objects
     obj.Destroy();
+    pipeline.Destroy();
+
+    ShaderLibrary::DeleteShaders();
     Logger::Shutdown();
 }
 

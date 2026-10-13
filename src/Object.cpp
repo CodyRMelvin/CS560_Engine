@@ -21,9 +21,7 @@ void Object::Destroy()
 
 void Object::Render( GLuint program )
 {
-    glUseProgram(program);
     mesh.Draw(transform);
-    glUseProgram(0);
 }
 
 void Object::Deserialize(std::filesystem::directory_entry source)

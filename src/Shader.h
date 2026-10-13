@@ -24,10 +24,14 @@ class Shader
             shaderTypeFragment,
             shaderTypeCompute,
             shaderTypeGeometry,
+            shaderTypeMax,
         };
 
         Shader();
+        Shader( const Shader& other );
         ~Shader();
+
+        Shader& operator=( const Shader& other );
 
         void LoadShader(std::filesystem::directory_entry path);
         void LoadShader(std::string path);
@@ -36,9 +40,14 @@ class Shader
         void Link() const;
         bool Verify() const;
 
+        bool IsValid() const;
+        operator bool() const;
+
         std::string_view Name() const {return m_name;}
         ShaderType Type() const {return m_type;}
+        GLenum GLenumType() const;
         GLuint Program() const {return m_program;} 
+        GLbitfield Stage() const;
 
     private:
         GLuint m_shader;
