@@ -9,9 +9,11 @@
 #ifndef WINDOW_H
 #define WINDOW_H
 
-#include <SDL3/SDL.h>
-
 #include "glm/glm.hpp"
+
+struct SDL_Window;
+struct SDL_GLContextState;
+typedef SDL_GLContextState *SDL_GLContext;
 
 class Window
 {

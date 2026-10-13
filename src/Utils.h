@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #pragma once
+#include <filesystem>
 #ifndef UTILS_H
 #define UTILS_H
 
@@ -59,5 +60,6 @@ class Error
         std::string m_what;
         Type m_type;
 };
+
 
 #endif
