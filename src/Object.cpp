@@ -16,7 +16,7 @@ Object::Object( Mesh m, Transform t )
 
 void Object::Destroy()
 {
-    mesh.Destroy();
+    mesh.DestroyAll();
 }
 
 void Object::Render( GLuint program )

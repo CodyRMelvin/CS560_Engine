@@ -18,7 +18,7 @@
 
 //Macro wrapper to inject file name and line number
 #define LogLine(...) LogLineBase( __FILE__, __LINE__, __VA_ARGS__)
-#define TestLog(severity) LogLineBase( __FILE__, __LINE__, severity, "Test" )
+#define TestLog() LogLineBase( __FILE__, __LINE__, Logger::severityError, "Test" )
 
 class Logger
 {

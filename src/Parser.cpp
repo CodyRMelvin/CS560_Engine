@@ -10,6 +10,8 @@
 
 #include "fastgltf/core.hpp"
 #include "fastgltf/types.hpp"
+#include "fastgltf/tools.hpp"
+#include <expected>
 
 fastgltf::Parser Parser::m_parser;
 
@@ -67,129 +69,132 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     m_opened = true;
 }
 
-[[nodiscard]] std::expected< Mesh, Error > Parser::ReadMesh( fastgltf::Mesh& mesh ) const
+[[nodiscard]] std::expected< Mesh, Error > Parser::ReadMesh( const fastgltf::Mesh& mesh ) const
 {
-    return std::unexpected( Error("Unknown error") );
-}
-
-[[nodiscard]] bool Parser::ReadMeshes( std::vector<Mesh>& meshes )
-{
-    for ( const auto& mesh : m_asset.meshes )
+    Mesh m( mesh.primitives.size() );
+    for ( auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it )
     {
-        std::vector<Vertex> vertices;
-        std::vector<uint32_t> indices;
+        const fastgltf::Attribute* posIt = it->findAttribute("POSITION");
 
-        for ( auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it )
+        if ( posIt == it->attributes.end() )
+            return std::unexpected( Error( "No position attribute found in mesh", Error::errorMinor ) );
+        if ( !it->indicesAccessor.has_value() )
+            return std::unexpected( Error( "No indices accessor found in mesh", Error::errorMinor ) );
+
+        uint16_t index = std::distance( mesh.primitives.begin(), it );
+
+        size_t baseColorTexcoordIndex = 0;
+        if ( it->materialIndex.has_value() )
         {
-            const auto* posIt =  it->findAttribute("POSITION"); 
-            assert( posIt != it->attributes.end() ); //Replace these with logger errors and returing false
-            assert( it->indicesAccessor.has_value() );
+            const fastgltf::Material& material = m_asset.materials[ it->materialIndex.value() ];
 
-            size_t baseColorTexcoordIndex = 0;
-            auto index = std::distance( mesh.primitives.begin(), it );
-            if ( it->materialIndex.has_value() )
+            auto& baseColorTexture = material.pbrData.baseColorTexture;
+            if ( baseColorTexture.has_value() )
             {
-                auto& material = m_asset.materials[ it->materialIndex.value() ];
-                auto& baseColorTexture = material.pbrData.baseColorTexture;
-                if ( baseColorTexture.has_value() )
-                {
-                    auto& texture = m_asset.textures[baseColorTexture->textureIndex];
-                    if ( !texture.imageIndex.has_value() )
-                    {
-                        Logger::LogLine( Logger::severityWarning, "Mesh {} in file {} has no image index", 
-                                         std::distance( mesh.primitives.begin(), it ), m_filePath.parent_path().string() );
-                        return false;
-                    }
+                const fastgltf::Texture& texture = m_asset.textures[baseColorTexture->textureIndex];
+                if ( !texture.imageIndex.has_value() )
+                    return std::unexpected( Error( "Mesh has no image index", Error::errorMinor ) );
 
-                    if ( baseColorTexture->transform && baseColorTexture->transform->texCoordIndex.has_value() )
-                        baseColorTexcoordIndex = baseColorTexture->transform->texCoordIndex.value();
-                    else
-                        baseColorTexcoordIndex = material.pbrData.baseColorTexture->texCoordIndex;
-                }
+                if ( baseColorTexture->transform && baseColorTexture->transform->texCoordIndex.has_value() )
+                    baseColorTexcoordIndex = baseColorTexture->transform->texCoordIndex.value();
+                else
+                    baseColorTexcoordIndex = material.pbrData.baseColorTexture->texCoordIndex;
             }
-
-            auto& posAccessor = m_asset.accessors[posIt->accessorIndex]; 
-            if ( !posAccessor.bufferViewIndex.has_value() )
-                continue;
-
-            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, posAccessor, 
-            [&]( fastgltf::math::fvec3 pos, std::size_t idx )
-            {
-                Vertex v;
-                v.pos = glm::vec3( pos.x(), pos.y(), pos.z() );
-                v.nrm = glm::vec3();
-                v.tex = glm::vec2();
-                vertices.push_back(v);
-            });
-
-            const auto* texcoordAttribute = it->findAttribute( std::string("TEXCOORD_") + std::to_string(baseColorTexcoordIndex) );  
-            if ( texcoordAttribute != it->attributes.end() ) 
-            {
-                auto& texCoordAccessor = m_asset.accessors[texcoordAttribute->accessorIndex];
-                if ( !texCoordAccessor.bufferViewIndex.has_value() )
-                    continue;
-
-                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>( m_asset, texCoordAccessor,
-                [&vertices]( fastgltf::math::fvec2 uv, size_t idx )
-                {
-                    if( vertices.capacity() < idx )
-                        vertices.resize( vertices.capacity() * 3 / 2 );
-
-                    vertices[idx].tex = glm::vec2( uv.x(), uv.y() );
-                }); 
-            }
-
-            const auto* normalAttribute = it->findAttribute("NORMAL"); 
-            if ( normalAttribute != it->attributes.end() )
-            {
-                auto& normalAccessor = m_asset.accessors[normalAttribute->accessorIndex];
-                if ( !normalAccessor.bufferViewIndex.has_value() )
-                    continue;
-
-                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, normalAccessor,
-                [&vertices]( fastgltf::math::fvec3 nrm, size_t idx )
-                {
-                    if( vertices.capacity() < idx )
-                        vertices.resize( vertices.capacity() * 3 / 2 );
-
-                    vertices[idx].nrm = glm::vec3( nrm.x(), nrm.y(), nrm.z() );
-                }); 
-
-            }
-
-            auto& indexAccessor = m_asset.accessors[ it->indicesAccessor.value() ];
-            if ( !indexAccessor.bufferViewIndex.has_value() )
-            {
-                Logger::LogLine( Logger::severityError, "Mesh {} in file {} has no indices buffer view", 
-                                 std::distance( mesh.primitives.begin(), it ), m_filePath.parent_path().string() );
-                return false;
-            }
-
-            if ( indexAccessor.componentType == fastgltf::ComponentType::UnsignedByte 
-                 || indexAccessor.componentType == fastgltf::ComponentType::UnsignedShort ) 
-            {
-                indices.reserve(indexAccessor.count);
-                fastgltf::iterateAccessorWithIndex<uint16_t>( m_asset, indexAccessor, 
-                [&indices]( uint16_t index, size_t idx )
-                {
-                    indices.push_back( static_cast<uint32_t>(index) );
-                });
-            }
-            else
-            {
-                indices.reserve(indexAccessor.count);
-                fastgltf::iterateAccessorWithIndex<uint32_t>( m_asset, indexAccessor, 
-                [&indices]( uint32_t index, size_t idx )
-                {
-                    indices.push_back(index);
-                });
-            }
-
         }
 
-        meshes.emplace_back( vertices, indices );
-        vertices.clear();
-        indices.clear();
+        m.InitializeVertexArray( index, fastgltf::to_underlying(it->type) ); 
+        const fastgltf::Accessor& posAccessor = m_asset.accessors[posIt->accessorIndex];
+        if ( !posAccessor.bufferViewIndex.has_value() )
+            continue;
+
+        m.InitializeVertexBuffer( index, posAccessor.count ); 
+        Vertex* vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) );
+        fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, posAccessor, 
+        [&vertices]( fastgltf::math::fvec3 pos, size_t idx ) 
+        {
+            vertices[idx].pos = glm::vec3( pos.x(), pos.y(), pos.z() );
+            vertices[idx].nrm = glm::vec3();
+            vertices[idx].tex = glm::vec2();
+        });
+        m.UnMapVertexBuffer(index); 
+        m.EnableVertexAttribute( index, 0, 3, GL_FLOAT, offsetof( Vertex, pos ) ); 
+
+        auto* nrmIt = it->findAttribute("NORMAL");
+        if ( nrmIt != it->attributes.end() )
+        {
+            const fastgltf::Accessor& nrmAccessor = m_asset.accessors[nrmIt->accessorIndex];
+            vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) );
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, nrmAccessor, 
+            [&vertices]( fastgltf::math::fvec3 nrm, size_t idx ) 
+            {
+                vertices[idx].nrm = glm::vec3( nrm.x(), nrm.y(), nrm.z() );
+            });
+            m.UnMapVertexBuffer(index); 
+            m.EnableVertexAttribute( index, 1, 3, GL_FLOAT, offsetof( Vertex, nrm ) ); 
+        }
+
+        std::string texString = std::string("TEXCOORD_") + std::to_string(baseColorTexcoordIndex);
+        const auto* texIt = it->findAttribute(texString); 
+        if ( texIt != it->attributes.end() )
+        {
+            const fastgltf::Accessor& texAccessor = m_asset.accessors[texIt->accessorIndex];
+            if ( !texAccessor.bufferViewIndex.has_value() )
+                continue;
+
+            vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) ); 
+            fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec2>( m_asset, texAccessor, 
+            [&vertices]( fastgltf::math::fvec2 uv, size_t idx )
+            {
+                vertices[idx].tex = glm::vec2( uv.x(), uv.y() );
+            });
+            m.UnMapVertexBuffer(index);
+            m.EnableVertexAttribute( index, 2, 2, GL_FLOAT, offsetof( Vertex, tex) ); 
+        }
+
+        const fastgltf::Accessor& indexAccessor = m_asset.accessors[ it->indicesAccessor.value() ];
+        if ( !indexAccessor.bufferViewIndex.has_value() )
+        {
+            m.DestroyAll();
+            return std::unexpected( Error( "Mesh has no index buffer", Error::errorMinor ) );
+        }
+
+        if ( indexAccessor.componentType == fastgltf::ComponentType::UnsignedByte || indexAccessor.componentType == fastgltf::ComponentType::UnsignedShort )
+        {
+            m.InitializeIndexBuffer( index, indexAccessor.count, GL_UNSIGNED_SHORT ); 
+            uint16_t* indices = static_cast<uint16_t*>( m.MapIndexBuffer( index, GL_WRITE_ONLY ) );
+            fastgltf::copyFromAccessor<uint16_t>( m_asset, indexAccessor, indices  );
+            m.UnMapIndexBuffer(index); 
+        }
+        else
+        {
+            m.InitializeIndexBuffer( index, indexAccessor.count, GL_UNSIGNED_INT ); 
+            uint32_t* indices = static_cast<uint32_t*>( m.MapIndexBuffer( index, GL_WRITE_ONLY ) );
+            fastgltf::copyFromAccessor<uint32_t>( m_asset, indexAccessor, indices  );
+            m.UnMapIndexBuffer(index); 
+        }
+        m.EnableIndexBuffer(index); 
+    }
+
+    m.InitializeDrawBuffer();
+
+    return m;
+}
+
+[[nodiscard]] bool Parser::ReadMeshes( std::vector<Mesh>& meshes ) const
+{
+    for ( auto meshIt = m_asset.meshes.begin(); meshIt != m_asset.meshes.end(); ++meshIt )
+    {
+        auto newMesh = ReadMesh(*meshIt);
+        if ( !newMesh.has_value() )
+        {
+            Error e = newMesh.error();
+            Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
+                             std::distance( m_asset.meshes.begin(), meshIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+            continue;
+        }
+
+        meshes.push_back( newMesh.value() );
+        break;
     }
 
     return true;

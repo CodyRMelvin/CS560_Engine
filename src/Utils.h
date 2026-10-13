@@ -29,12 +29,16 @@ class Error
         {
             switch(t)
             {
+                case errorInvalid:
+                    return "Invalid";
                 case errorNone:
                     return "None";
                 case errorMinor:
                     return "Minor";
                 case errorSevere:
                     return "Severe";
+                default:
+                    return "This shouldn't return";
             }
         }
 

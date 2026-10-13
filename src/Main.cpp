@@ -201,7 +201,7 @@ int main ( int argc, char* argv[] )
     glm::mat4 normalMatrix = cam.Model();
     normalMatrix[3][0] = normalMatrix[3][1] = 0;
     normalMatrix = AffineInverse(normalMatrix);
-    //normalMatrix = glm::transpose(normalMatrix);
+    normalMatrix = glm::transpose(normalMatrix);
 
     glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
 #endif
@@ -210,6 +210,7 @@ int main ( int argc, char* argv[] )
     glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( cam.Perspective() ) );
     glUseProgram(0);
 
+    Logger::LogLine( Logger::severityInfo, "Beginning program loop" );
     while (!quit)
     {
         glClearDepth(1);
@@ -245,13 +246,13 @@ int main ( int argc, char* argv[] )
                         cam.Strafe(-.05);
                     
                     if (e.key.key == SDLK_UP)
-                        cam.Rotate( { 1, 0, 0 }, -.05 );
-                    else if (e.key.key == SDLK_DOWN)
                         cam.Rotate( { 1, 0, 0 }, .05 );
+                    else if (e.key.key == SDLK_DOWN)
+                        cam.Rotate( { 1, 0, 0 }, -.05 );
                     else if (e.key.key == SDLK_LEFT)
-                        cam.Rotate( { 0, 1, 0 }, -.05 );
-                    else if (e.key.key == SDLK_RIGHT)
                         cam.Rotate( { 0, 1, 0 }, .05 );
+                    else if (e.key.key == SDLK_RIGHT)
+                        cam.Rotate( { 0, 1, 0 }, -.05 );
 
                     if ( e.key.key == SDLK_Q )
                     {
