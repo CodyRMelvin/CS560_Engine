@@ -131,9 +131,10 @@ Camera& Camera::Rise(float distance)
     return *this;
 }
 
-Camera& Camera::Rotate( glm::vec3 axis, float rads )
+Camera& Camera::Rotate( glm::vec3 localAxis, float rads )
 {
-    Quat q( rads, axis );
+    glm::vec4 localAxis4 = glm::vec4( localAxis, 0 ) * View();
+    Quat q( rads, localAxis4 );
     m_right = q.Rotate(m_right);
     m_up = q.Rotate(m_up);
     m_back = q.Rotate(m_back);

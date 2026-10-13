@@ -237,21 +237,21 @@ int main ( int argc, char* argv[] )
                 
                 case SDL_EVENT_KEY_DOWN:
                     if (e.key.key == SDLK_W)
-                        cam.Forwards(.05);
-                    else if (e.key.key == SDLK_S)
-                        cam.Forwards(-.05);
-                    else if (e.key.key == SDLK_D)
-                        cam.Strafe(.05);
-                    else if (e.key.key == SDLK_A)
-                        cam.Strafe(-.05);
+                        cam.Forwards(.5);
+                    if (e.key.key == SDLK_S)
+                        cam.Forwards(-.5);
+                    if (e.key.key == SDLK_D)
+                        cam.Strafe(.5);
+                    if (e.key.key == SDLK_A)
+                        cam.Strafe(-.5);
                     
                     if (e.key.key == SDLK_UP)
                         cam.Rotate( { 1, 0, 0 }, .05 );
-                    else if (e.key.key == SDLK_DOWN)
+                    if (e.key.key == SDLK_DOWN)
                         cam.Rotate( { 1, 0, 0 }, -.05 );
-                    else if (e.key.key == SDLK_LEFT)
+                    if (e.key.key == SDLK_LEFT)
                         cam.Rotate( { 0, 1, 0 }, .05 );
-                    else if (e.key.key == SDLK_RIGHT)
+                    if (e.key.key == SDLK_RIGHT)
                         cam.Rotate( { 0, 1, 0 }, -.05 );
 
                     if ( e.key.key == SDLK_Q )
@@ -261,8 +261,6 @@ int main ( int argc, char* argv[] )
                         eQuit.type = SDL_EVENT_QUIT;
                         SDL_PushEvent(&eQuit);
                     }
-
-                    
 
                     glUseProgram( vs.Program() );
                     glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( cam.View() ) );

@@ -33,7 +33,7 @@ class Camera
         Camera& Forwards(float distance);
         Camera& Strafe(float distance);
         Camera& Rise(float distance);
-        Camera& Rotate( glm::vec3 axis, float rads );
+        Camera& Rotate( glm::vec3 localAxis, float rads );
 
         glm::mat4 Model() const;
         glm::mat4 View() const;
