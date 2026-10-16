@@ -199,3 +199,25 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
 
     return true;
 }
+
+[[nodiscard]] bool Parser::ReadScene() const
+{
+    for ( auto meshIt = m_asset.meshes.begin(); meshIt != m_asset.meshes.end(); ++meshIt )
+    {
+        auto newMesh = ReadMesh(*meshIt);
+        if ( !newMesh.has_value() )
+        {
+            Error e = newMesh.error();
+            Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
+                             std::distance( m_asset.meshes.begin(), meshIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+            continue;
+        }
+
+        //Node::NodeLibrary.
+        break;
+    }
+
+    return true;
+}
+
+

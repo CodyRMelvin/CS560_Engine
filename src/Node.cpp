@@ -9,9 +9,9 @@
 #include "Transform.h"
 #include <sys/socket.h>
 
-std::unordered_map< uint32_t, Node* > Node::NodeLibrary;
+siv::Vector<Node*> Node::NodeLibrary;
 
-Node::Node( uint32_t id, uint32_t parent ) 
+Node::Node( uint64_t id, uint64_t parent ) 
     : m_ID(id)
     , m_parent(parent)
     , m_children()
@@ -23,7 +23,7 @@ Node::Node( const Node& other )
     , m_children( other.m_children.begin(), other.m_children.end() )
 { }
 
-uint32_t Node::ID() const
+uint64_t Node::ID() const
 {
     return m_ID;
 }
@@ -33,7 +33,7 @@ bool Node::HasParent() const
     return m_ID != m_parent;
 }
 
-uint32_t Node::ParentID() const
+uint64_t Node::ParentID() const
 {
     return m_parent;
 }
@@ -43,12 +43,12 @@ Node* Node::Parent() const
     return NodeLibrary[m_parent];
 }
 
-void Node::Parent( uint32_t parent )
+void Node::Parent( uint64_t parent )
 {
     m_parent = parent;
 }
 
-uint32_t Node::ChildID( size_t index ) const
+uint64_t Node::ChildID( size_t index ) const
 {
     return m_children[index];
 }
@@ -58,17 +58,17 @@ Node* Node::Child( size_t index ) const
     return NodeLibrary[ m_children[index] ];
 }
 
-std::vector<uint32_t> Node::Children() const
+std::vector<uint64_t> Node::Children() const
 {
     return m_children;
 }
 
-void Node::AddChild( uint32_t ID )
+void Node::AddChild( uint64_t ID )
 {
     m_children.push_back(ID);
 }
 
-Node3D::Node3D( uint32_t id, uint32_t parent )
+Node3D::Node3D( uint64_t id, uint64_t parent )
     : Node( id, parent )
     , m_transform()
 { }
@@ -111,11 +111,10 @@ void Node3D::LocalTransform( const Transform& localTransform )
 void DeleteAllNodes()
 {
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
-    []( auto& pair )
+    []( Node* n )
     {
-        pair.second->Destroy();
-        delete pair.second;
-        pair.second = nullptr;
+        delete n;
+        n = nullptr;
     });
 
     Node::NodeLibrary.clear();

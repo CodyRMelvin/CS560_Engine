@@ -14,7 +14,6 @@
 #include "fastgltf/core.hpp"
 
 typedef class Mesh Mesh;
-typedef class Mesh2 Mesh2;
 
 class Parser
 {
@@ -26,6 +25,7 @@ class Parser
 
         [[nodiscard]] std::expected< Mesh, Error > ReadMesh( const fastgltf::Mesh& mesh ) const;
         [[nodiscard]] bool ReadMeshes( std::vector<Mesh>& ) const;
+        [[nodiscard]] bool ReadScene() const;
 
         operator bool() const { return m_opened; }
 

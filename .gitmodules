@@ -7,3 +7,6 @@
 [submodule "dependencies/external/fastgltf"]
 	path = dependencies/external/fastgltf
 	url = https://github.com/spnda/fastgltf
+[submodule "dependencies/external/SIV"]
+	path = dependencies/external/SIV
+	url = https://github.com/johnBuffer/StableIndexVector
