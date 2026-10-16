@@ -11,6 +11,8 @@
 
 #include "Math.h"
 
+#include "fastgltf/types.hpp"
+
 class Transform
 {
     public:
@@ -21,6 +23,7 @@ class Transform
         Transform( float scaleX, float scaleY, float scaleZ, 
                    float translationX, float translationY, float translationZ );
         Transform( glm::vec3 scale, glm::vec3 translation, glm::vec3 rotAxis, float rotRadians );
+        Transform( fastgltf::TRS trs );
 
         inline glm::vec3 Scale() const { return m_scale; }
         inline glm::vec3 Translation() const { return m_translation; }

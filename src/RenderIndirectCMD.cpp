@@ -7,6 +7,7 @@
 
 #include "RenderIndirectCMD.h"
 #include "Application.h"
+#include "Mesh.h"
 
 void RenderIndirectCMD::Execute()
 {
@@ -19,7 +20,7 @@ void RenderIndirectCMD::Execute()
     glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
     pipeline.UniformMat( 2, normalMatrix );
 
-    mesh.Render();
+    static_cast<Mesh*>( Node::NodeLibrary[mesh] )->DrawPrimitives();
 
     pipeline.UnBind();
 }

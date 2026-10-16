@@ -96,6 +96,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                     return std::unexpected( Error( "Mesh has no image index", Error::errorMinor ) );
 
                 if ( baseColorTexture->transform && baseColorTexture->transform->texCoordIndex.has_value() )
+
                     baseColorTexcoordIndex = baseColorTexture->transform->texCoordIndex.value();
                 else
                     baseColorTexcoordIndex = material.pbrData.baseColorTexture->texCoordIndex;
@@ -180,42 +181,41 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     return m;
 }
 
-[[nodiscard]] bool Parser::ReadMeshes( std::vector<Mesh>& meshes ) const
-{
-    for ( auto meshIt = m_asset.meshes.begin(); meshIt != m_asset.meshes.end(); ++meshIt )
-    {
-        auto newMesh = ReadMesh(*meshIt);
-        if ( !newMesh.has_value() )
-        {
-            Error e = newMesh.error();
-            Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
-                             std::distance( m_asset.meshes.begin(), meshIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
-            continue;
-        }
-
-        meshes.push_back( newMesh.value() );
-        break;
-    }
-
-    return true;
-}
-
 [[nodiscard]] bool Parser::ReadScene() const
 {
-    for ( auto meshIt = m_asset.meshes.begin(); meshIt != m_asset.meshes.end(); ++meshIt )
+    for ( auto nodeIt = m_asset.nodes.begin(); nodeIt != m_asset.nodes.end(); ++nodeIt )
     {
-        auto newMesh = ReadMesh(*meshIt);
-        if ( !newMesh.has_value() )
+        if ( nodeIt->meshIndex.has_value() )
         {
-            Error e = newMesh.error();
-            Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
-                             std::distance( m_asset.meshes.begin(), meshIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
-            continue;
+            auto expectMesh = ReadMesh( m_asset.meshes[ nodeIt->meshIndex.value() ] );
+            if ( !expectMesh.has_value() )
+            {
+                Error e = expectMesh.error();
+                Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
+                                 std::distance( m_asset.nodes.begin(), nodeIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+                continue;
+            }
+
+            Mesh* m = new Mesh( expectMesh.value() );
+            m->m_ID = Node::NodeLibrary.push_back(m);
+            m->m_parent = m->m_ID;
+            m->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
+            m->m_children.insert( m->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
         }
 
-        //Node::NodeLibrary.
-        break;
     }
+
+    // For each node, assign its children the index of its parent
+    std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
+    []( Node* n )
+    {
+        std::for_each( n->m_children.begin(), n->m_children.end(),
+        [&n]( uint64_t idx )
+        {
+            Node* child = Node::NodeLibrary[idx];
+            child->m_parent = n->m_ID; 
+        });
+    });
 
     return true;
 }

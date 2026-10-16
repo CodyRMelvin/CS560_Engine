@@ -24,12 +24,6 @@ void Object::Destroy()
 
 void Object::Render()
 {
-    RenderIndirectCMD* cmd = new RenderIndirectCMD();
-    cmd->mesh = mesh;
-    cmd->transform = transform;
-    cmd->pipeline = pipeline;
-
-    RenderDevice::Get().Push(cmd); 
 }
 
 void Object::Deserialize(std::filesystem::directory_entry source)

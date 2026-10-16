@@ -11,6 +11,7 @@
 
 #include "Common.h"
 #include "Node.h"
+#include "Pipeline.h"
 
 #include <glad/glad.h>
 
@@ -45,6 +46,8 @@ class Mesh : public Node3D
         void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset );
         void EnableIndexBuffer( size_t index );
 
+        void DrawPrimitives() const;
+
     private:
         struct IndirectDrawCommand
         {
@@ -63,6 +66,7 @@ class Mesh : public Node3D
 
         std::vector<Primitive> m_primitives;
         GLuint m_drawBuffer;
+        Pipeline m_pipeline;
 
 };
 

@@ -57,6 +57,14 @@ Transform::Transform( glm::vec3 scale, glm::vec3 translation, glm::vec3 rotAxis,
     , m_matrix(0)
 {}
 
+Transform::Transform( fastgltf::TRS trs )
+    : m_scale( trs.scale.x(), trs.scale.y(), trs.scale.z() )
+    , m_translation( trs.translation.x(), trs.translation.y(), trs.translation.z() )
+    , m_rotation( trs.rotation.x(), trs.rotation.y(),  trs.rotation.z(),  trs.rotation.w() )
+    , m_isDirty(true)
+    , m_matrix(0)
+{ }
+
 glm::mat4 Transform::Matrix()
 {
     if (!m_isDirty)

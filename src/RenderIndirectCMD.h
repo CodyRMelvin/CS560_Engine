@@ -11,14 +11,13 @@
 
 #include "Common.h"
 #include "RenderDevice.h"
-#include "Mesh.h"
 #include "Pipeline.h"
 #include "Transform.h"
 
 class RenderIndirectCMD : public ICommand
 {
     public:
-        Mesh mesh;
+        uint64_t mesh;
         Pipeline pipeline;
         Transform transform;
 

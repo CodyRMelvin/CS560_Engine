@@ -6,6 +6,9 @@
 //**************************************************************************************************
 
 #include "Mesh.h"
+#include "ShaderLibrary.h"
+#include "RenderDevice.h"
+#include "RenderIndirectCMD.h"  
 
 #include <glad/glad.h>
 
@@ -34,18 +37,38 @@ Mesh& Mesh::operator=( const Mesh& other )
 }
 
 void Mesh::Initialize()
-{ }
+{
+    m_pipeline.Initialize();
+    m_pipeline.Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeVertex ) )
+              .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
+
+    m_pipeline.Bind();
+    if(!m_pipeline)
+    {
+
+        GLint logLength;
+        glGetProgramPipelineiv(m_pipeline.GLPipeline(), GL_INFO_LOG_LENGTH, &logLength);
+        if ( logLength > 0 )
+        {
+            std::vector<char> log(logLength);
+            glGetProgramPipelineInfoLog(m_pipeline.GLPipeline(), logLength, nullptr, log.data());    
+            std::runtime_error e( std::format( "Failed to construct m_pipeline: {}", log.data() ) );
+            throw(e);
+        }
+
+        std::runtime_error e("Failed to construct m_pipeline");
+        throw(e);
+    }
+}
 
 void Mesh::Render()
 {
-    glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
-    for ( int i = 0; i < m_primitives.size(); ++i )
-    {
-        const Primitive& p = m_primitives[i];
-        glBindVertexArray(p.VAO);
-        glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( i * sizeof(Primitive) ) );
-        glBindVertexArray(0);
-    }
+    RenderIndirectCMD* cmd = new RenderIndirectCMD();
+    cmd->mesh = m_ID;
+    cmd->transform = m_transform;
+    cmd->pipeline = m_pipeline;
+
+    RenderDevice::Get().Push(cmd); 
 }
 
 void Mesh::Destroy()
@@ -248,4 +271,16 @@ void Mesh::EnableIndexBuffer( size_t index )
 
     Primitive& p = m_primitives[index];
     glVertexArrayElementBuffer( p.VAO, p.EBO );
+}
+
+void Mesh::DrawPrimitives() const
+{
+    glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+    for ( int i = 0; i < m_primitives.size(); ++i )
+    {
+        const Primitive& p = m_primitives[i];
+        glBindVertexArray(p.VAO);
+        glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( i * sizeof(Primitive) ) );
+        glBindVertexArray(0);
+    }
 }

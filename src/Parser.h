@@ -24,7 +24,6 @@ class Parser
         ~Parser() = default;
 
         [[nodiscard]] std::expected< Mesh, Error > ReadMesh( const fastgltf::Mesh& mesh ) const;
-        [[nodiscard]] bool ReadMeshes( std::vector<Mesh>& ) const;
         [[nodiscard]] bool ReadScene() const;
 
         operator bool() const { return m_opened; }

@@ -14,6 +14,8 @@
 
 #include "external/SIV/index_vector.hpp"
 
+//typedef class Parser Parser;
+
 class Node
 {
     public:
@@ -40,6 +42,8 @@ class Node
         Node* Child( size_t index ) const;
         std::vector<uint64_t> Children() const;
         void AddChild( uint64_t ID );
+
+        friend class Parser;
 
     protected:
         uint64_t m_ID;

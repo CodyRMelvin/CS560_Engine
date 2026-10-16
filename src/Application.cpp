@@ -11,14 +11,14 @@
 #include "RenderDevice.h"
 #include "ShaderLibrary.h"
 #include "Parser.h"
-#include "Object.h"
 #include "Camera.h"
 #include "Pipeline.h"
+#include "Node.h"
 
 #include "glad/glad.h"
 #include "SDL3/SDL_events.h"
-
-static Object obj;
+#include <algorithm>
+#include <stdexcept>
 
 Application::Application()
     : m_window()
@@ -38,31 +38,6 @@ void Application::Initialize()
     RenderDevice::Get().Initialize();
     RenderDevice::Get().config = { .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, .clearColor = { 0, 0, 1, 1 } };
     
-    //Create a pipeline object, attach the shaders, and link
-    Pipeline pipeline;
-    pipeline.Initialize(); 
-    pipeline.Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeVertex ) )
-            .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
-
-    //Tell opengl this pipeline is currently being used
-    pipeline.Bind();
-    if(!pipeline)
-    {
-
-        GLint logLength;
-        glGetProgramPipelineiv(pipeline.GLPipeline(), GL_INFO_LOG_LENGTH, &logLength);
-        if ( logLength > 0 )
-        {
-            std::vector<char> log(logLength);
-            glGetProgramPipelineInfoLog(pipeline.GLPipeline(), logLength, nullptr, log.data());    
-            std::runtime_error e( std::format( "Failed to construct pipeline: {}", log.data() ) );
-            throw(e);
-        }
-
-        std::runtime_error e("Failed to construct pipeline");
-        throw(e);
-    }
-
     std::filesystem::path dir( GetCWD().string() + "/Assets/glTF/roman_D_out/roman_D.gltf" );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
     if (!parser)
@@ -71,15 +46,18 @@ void Application::Initialize()
         throw(e);
     }
 
-    std::vector<Mesh> meshes;
-    if ( !parser.ReadMeshes(meshes) )
+    bool res = parser.ReadScene();
+    if (!res)
     {
-        std::runtime_error e("Failed to parse mesh");
+        std::runtime_error e("Failed to read scene");
         throw(e);
     }
 
-    obj = Object( meshes[0], Transform( 1, 1, 1 ) );
-    obj.pipeline = pipeline;
+    std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(), 
+    []( Node* n )
+    {
+        n->Initialize();
+    });
 
     m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
                   .SetPlaneDistances( .1f, 100.f )
@@ -93,7 +71,12 @@ void Application::Run()
 
     while (!m_shouldQuit)
     {
-        obj.Render();
+        std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
+        []( Node* n )
+        {
+            n->Render();
+        });
+
         RenderDevice::Get().ExecuteCommands();
         m_window.SwapWindow();
 
@@ -141,10 +124,7 @@ void Application::Run()
 void Application::Shutdown()
 {
     Logger::LogLine( Logger::severityInfo, "Shutting down application" );
-
-    //Temporary, static objects
-    obj.Destroy();
-
+    DeleteAllNodes();
     ShaderLibrary::DeleteShaders();
     Logger::Shutdown();
 }
