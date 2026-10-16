@@ -19,7 +19,7 @@ void RenderIndirectCMD::Execute()
     glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
     pipeline.UniformMat( 2, normalMatrix );
 
-    mesh.DrawPrimitives();
+    mesh.Render();
 
     pipeline.UnBind();
 }

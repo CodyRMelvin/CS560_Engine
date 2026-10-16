@@ -10,29 +10,33 @@
 #define MESH_H
 
 #include "Common.h"
-#include "Transform.h"
+#include "Node.h"
 
 #include <glad/glad.h>
 
 typedef class Primitive Primitive;
 
-class Mesh
+class Mesh : public Node3D
 {
     public:
 
-        Mesh() : m_primitives(), m_drawBuffer(0) {}
+        Mesh() : Node3D(), m_primitives(), m_drawBuffer(0) {}
+        Mesh( uint32_t id, uint32_t parent );
         Mesh( size_t size ) : m_primitives(size), m_drawBuffer(0) {}
         Mesh( const Mesh& other );
         ~Mesh() = default;
 
         Mesh& operator=( const Mesh& other );
 
+        void Initialize() override;
+        void Render() override;
+        void Destroy() override;
+
         void InitializeVertexArray( size_t index, GLenum primitiveType  );
         void InitializeVertexBuffer( size_t index, size_t count );
         void InitializeIndexBuffer( size_t index, size_t count, GLenum indexType );
         void InitializeDrawBuffer();
         void Destroy( size_t index );
-        void DestroyAll();
 
         void* MapVertexBuffer( size_t index, GLenum access );
         void* MapIndexBuffer( size_t index, GLenum access );
@@ -40,8 +44,6 @@ class Mesh
         void UnMapIndexBuffer( size_t index );
         void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset );
         void EnableIndexBuffer( size_t index );
-
-        void DrawPrimitives() const;
 
     private:
         struct IndirectDrawCommand

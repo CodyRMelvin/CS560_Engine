@@ -154,7 +154,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         const fastgltf::Accessor& indexAccessor = m_asset.accessors[ it->indicesAccessor.value() ];
         if ( !indexAccessor.bufferViewIndex.has_value() )
         {
-            m.DestroyAll();
+            m.Destroy();
             return std::unexpected( Error( "Mesh has no index buffer", Error::errorMinor ) );
         }
 

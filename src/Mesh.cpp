@@ -9,8 +9,15 @@
 
 #include <glad/glad.h>
 
+Mesh::Mesh( uint32_t id, uint32_t parent )
+    : Node3D( id, parent )
+    , m_primitives()
+    , m_drawBuffer()
+{ }
+
 Mesh::Mesh( const Mesh& other )
-    : m_primitives(other.m_primitives) 
+    : Node3D(other)
+    , m_primitives(other.m_primitives) 
     , m_drawBuffer(other.m_drawBuffer)
 { }
 
@@ -19,9 +26,42 @@ Mesh& Mesh::operator=( const Mesh& other )
     if ( this == &other )
         return *this;
 
+    *static_cast<Node3D*>(this) = other;
+
     this->m_drawBuffer = other.m_drawBuffer;
     this->m_primitives = std::vector<Primitive>(other.m_primitives);
     return *this;
+}
+
+void Mesh::Initialize()
+{ }
+
+void Mesh::Render()
+{
+    glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+    for ( int i = 0; i < m_primitives.size(); ++i )
+    {
+        const Primitive& p = m_primitives[i];
+        glBindVertexArray(p.VAO);
+        glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( i * sizeof(Primitive) ) );
+        glBindVertexArray(0);
+    }
+}
+
+void Mesh::Destroy()
+{
+    for ( auto& p : m_primitives )
+    {
+        if (p.VAO)
+            glDeleteVertexArrays( 1, &p.VAO );
+        if (p.VBO)
+            glDeleteBuffers( 1, &p.VBO );
+        if (p.EBO)
+            glDeleteBuffers( 1, &p.EBO );
+    }
+
+    glDeleteBuffers( 1, &m_drawBuffer );
+    m_primitives.clear();
 }
 
 void Mesh::InitializeVertexArray( size_t index, GLenum primitiveType )
@@ -105,22 +145,6 @@ void Mesh::Destroy( size_t index )
         glDeleteBuffers( 1, &p.EBO );
 
     m_primitives.erase( m_primitives.begin() + index );
-}
-
-void Mesh::DestroyAll()
-{
-    for ( auto& p : m_primitives )
-    {
-        if (p.VAO)
-            glDeleteVertexArrays( 1, &p.VAO );
-        if (p.VBO)
-            glDeleteBuffers( 1, &p.VBO );
-        if (p.EBO)
-            glDeleteBuffers( 1, &p.EBO );
-    }
-
-    glDeleteBuffers( 1, &m_drawBuffer );
-    m_primitives.clear();
 }
 
 void* Mesh::MapVertexBuffer( size_t index, GLenum access )
@@ -224,17 +248,4 @@ void Mesh::EnableIndexBuffer( size_t index )
 
     Primitive& p = m_primitives[index];
     glVertexArrayElementBuffer( p.VAO, p.EBO );
-}
-
-void Mesh::DrawPrimitives() const
-{
-    glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
-    for ( int i = 0; i < m_primitives.size(); ++i )
-    {
-        const Primitive& p = m_primitives[i];
-        glBindVertexArray(p.VAO);
-        glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( i * sizeof(Primitive) ) );
-        glBindVertexArray(0);
-    }
-
 }

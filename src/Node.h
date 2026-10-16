@@ -12,8 +12,6 @@
 #include "Common.h"
 #include "Transform.h"
 
-#include <optional>
-
 class Node
 {
     public:
@@ -53,7 +51,7 @@ class Node3D : public Node
         Node3D() = default;
         Node3D( uint32_t id, uint32_t parent );
         Node3D( const Node3D& other );
-        virtual ~Node3D() = 0;
+        virtual ~Node3D() {};
 
         virtual void Initialize() = 0;
         virtual void Render() = 0;

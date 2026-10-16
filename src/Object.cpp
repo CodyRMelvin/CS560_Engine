@@ -18,7 +18,7 @@ Object::Object( Mesh m, Transform t )
 
 void Object::Destroy()
 {
-    mesh.DestroyAll();
+    mesh.Destroy();
     pipeline.Destroy();
 }
 
