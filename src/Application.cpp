@@ -36,6 +36,7 @@ void Application::Initialize()
 
     m_window.Initialize();
     RenderDevice::Get().Initialize();
+    RenderDevice::Get().config = { .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, .clearColor = { 0, 0, 1, 1 } };
     
     //Create a pipeline object, attach the shaders, and link
     Pipeline pipeline;

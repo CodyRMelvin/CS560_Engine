@@ -11,6 +11,8 @@
 
 #include "Common.h"
 
+#include "glad/glad.h"
+
 class ICommand
 {
     public:
@@ -19,9 +21,17 @@ class ICommand
         virtual void Execute() = 0;
 };
 
+struct RenderDeviceSettings
+{
+    GLbitfield clearOptions;
+    glm::vec4 clearColor;
+};
+
 class RenderDevice
 {
     public:
+        RenderDeviceSettings config;
+
         // Force default destructor
         ~RenderDevice() = default;
 

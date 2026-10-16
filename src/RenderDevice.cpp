@@ -11,8 +11,6 @@
 #include "Debug.h"
 #endif
 
-#include "glad/glad.h"
-
 #include <algorithm>
 
 RenderDevice& RenderDevice::Get()
@@ -53,9 +51,8 @@ void RenderDevice::Initialize()
 void RenderDevice::ExecuteCommands()
 {
     glClearDepth(1);
-    glClearColor( 0, 0, 1, 1 );
-    glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
+    glClearColor( config.clearColor.x, config.clearColor.y, config.clearColor.z, config.clearColor.a );
+    glClear(config.clearOptions);
 
     std::for_each( m_commandBuffer.begin(), m_commandBuffer.end(), 
     []( ICommand* cmd )
