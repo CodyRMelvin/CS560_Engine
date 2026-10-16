@@ -55,6 +55,11 @@ class Transform
             m_rotation = Quat( radians, glm::normalize(axis) ); 
             m_isDirty = true; 
         }
+         inline void Rotation( const Quat& q )
+         {
+             m_rotation = q;
+             m_isDirty = true;
+         }
 
         glm::mat4 Matrix();
         inline glm::mat4 Matrix() const { return m_matrix; }
