@@ -61,5 +61,10 @@ class Error
         Type m_type;
 };
 
+inline std::filesystem::path GetCWD()
+{
+    static std::filesystem::path dir  = std::filesystem::current_path();
+    return dir; 
+}
 
 #endif

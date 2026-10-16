@@ -8,21 +8,17 @@
 #include "Application.h"
 
 #include "Common.h"
+#include "RenderDevice.h"
 #include "ShaderLibrary.h"
 #include "Parser.h"
 #include "Object.h"
-#include "Mesh.h"
 #include "Camera.h"
 #include "Pipeline.h"
-#ifdef _DEBUG
-#include "Debug.h"
-#endif
 
 #include "glad/glad.h"
-#include "SDL3/SDL.h"
+#include "SDL3/SDL_events.h"
 
 static Object obj;
-static Pipeline pipeline;
 
 Application::Application()
     : m_window()
@@ -39,29 +35,10 @@ void Application::Initialize()
     Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
 
     m_window.Initialize();
+    RenderDevice::Get().Initialize();
     
-    if ( !gladLoadGL() )
-    {
-        std::runtime_error e("gladLoadGL failure");
-        throw(e);
-    }
-
-    glEnable(GL_DEBUG_OUTPUT);
-    glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS); 
-    glDebugMessageCallback(glDebugOutput, nullptr);
-
-    std::filesystem::path dir = GetCWD();
-    std::string pathStr = dir.string();
-    std::string::size_type size = pathStr.find("/bin");
-    if ( size != std::string::npos )
-    {
-        pathStr.erase( pathStr.begin() + size, pathStr.end() );
-    }
-    pathStr += "/Assets";
-    glEnableVertexAttribArray(0);
-    ShaderLibrary::CompileShaders( pathStr + "/shaders" );
-
     //Create a pipeline object, attach the shaders, and link
+    Pipeline pipeline;
     pipeline.Initialize(); 
     pipeline.Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeVertex ) )
             .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
@@ -85,7 +62,7 @@ void Application::Initialize()
         throw(e);
     }
 
-    dir = std::filesystem::path( pathStr + "/glTF/roman_D_out/roman_D.gltf" );   
+    std::filesystem::path dir( GetCWD().string() + "/Assets/glTF/roman_D_out/roman_D.gltf" );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
     if (!parser)
     {
@@ -101,9 +78,7 @@ void Application::Initialize()
     }
 
     obj = Object( meshes[0], Transform( 1, 1, 1 ) );
-    
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    obj.pipeline = pipeline;
 
     m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
                   .SetPlaneDistances( .1f, 100.f )
@@ -112,31 +87,13 @@ void Application::Initialize()
 
 void Application::Run()
 {
-    pipeline.Bind();
-    pipeline.ActiveShader(Shader::shaderTypeVertex);
-    pipeline.UniformMat( 1, m_activeCamera.View() );
-    pipeline.UniformMat( 2, m_activeCamera.Perspective() );
-    //glUniformMatrix4fv( 1, 1, GL_FALSE, glm::value_ptr( m_activeCamera.View() ) );
-    //glUniformMatrix4fv( 2, 1, GL_FALSE, glm::value_ptr( m_activeCamera.Perspective() ) );
-    glm::mat4 normalMatrix = m_activeCamera.Model();
-    normalMatrix[3][0] = normalMatrix[3][1] = 0;
-    normalMatrix = AffineInverse(normalMatrix);
-    normalMatrix = glm::transpose(normalMatrix);
-    pipeline.UniformMat( 3, normalMatrix );
-    //glUniformMatrix4fv( 3, 1, GL_FALSE, glm::value_ptr( normalMatrix ) );
-
     SDL_Event e;
     Logger::LogLine( Logger::severityInfo, "Beginning program loop" );
+
     while (!m_shouldQuit)
     {
-        glClearDepth(1);
-        glClearColor( 0, 0, 1, 1 );
-        glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-
-        obj.Render( pipeline.Shader(Shader::shaderTypeVertex).Program() );
-
-        glFlush();
-
+        obj.Render();
+        RenderDevice::Get().ExecuteCommands();
         m_window.SwapWindow();
 
         while ( SDL_PollEvent(&e) )
@@ -174,20 +131,10 @@ void Application::Run()
                         eQuit.type = SDL_EVENT_QUIT;
                         SDL_PushEvent(&eQuit);
                     }
-
-                    pipeline.UniformMat( 1, m_activeCamera.View() );
-                    pipeline.UniformMat( 2, m_activeCamera.Perspective() );
-                    glm::mat4 normalMatrix = m_activeCamera.Model();
-
-                    normalMatrix[3][0] = normalMatrix[3][1] = 0;
-                    normalMatrix = AffineInverse(normalMatrix);
-                    normalMatrix = glm::transpose(normalMatrix);
-                    pipeline.UniformMat( 3, normalMatrix );
                     break;
             }
         }
     }
-
 }
 
 void Application::Shutdown()
@@ -196,9 +143,13 @@ void Application::Shutdown()
 
     //Temporary, static objects
     obj.Destroy();
-    pipeline.Destroy();
 
     ShaderLibrary::DeleteShaders();
     Logger::Shutdown();
 }
 
+Application& Application::Get()
+{
+    static Application a;
+    return a;
+}

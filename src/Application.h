@@ -12,28 +12,26 @@
 #include "Window.h"
 #include "Camera.h"
 
-#include <filesystem>
-
 class Application
 {
     public:
-        Application();
         ~Application();
 
         void Initialize();
         void Run();
         void Shutdown();
 
-        static std::filesystem::path GetCWD()
-        {
-            static std::filesystem::path dir  = std::filesystem::current_path();
-            return dir; 
-        }
+        static Application& Get();
+
+        Window& GetWindow() { return m_window; }
+        Camera& GetActiveCamera() { return m_activeCamera; }
 
     private:
         Window m_window;
         Camera m_activeCamera;
         bool m_shouldQuit;
+
+        Application();
 };
 
 #endif

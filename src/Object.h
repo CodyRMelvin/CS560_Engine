@@ -11,6 +11,7 @@
 
 #include "Mesh.h"
 #include "Transform.h"
+#include "Pipeline.h"
 
 #include <filesystem>
 
@@ -20,6 +21,7 @@ class Object
 
         Mesh mesh;
         Transform transform;
+        Pipeline pipeline;
 
         Object() = default;
         Object( Mesh m, Transform t );
@@ -27,7 +29,7 @@ class Object
 
         void Destroy();
         // Stubs for later use
-        void Render( GLuint program );
+        void Render();
         void Deserialize(std::filesystem::directory_entry source);
 };
 

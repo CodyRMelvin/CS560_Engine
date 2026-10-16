@@ -10,7 +10,7 @@
 
 int main ( int argc, char* argv[] )
 {
-    Application app;
+    Application& app = Application::Get();
     try { app.Initialize(); }
     catch( std::runtime_error e )
     {

@@ -16,25 +16,6 @@
 
 typedef class Primitive Primitive;
 
-class MeshOld
-{
-    public:
-        std::vector<Vertex> m_vertices;
-        std::vector<uint32_t> m_indices;
-
-        MeshOld() = default;
-        MeshOld( const std::vector<Vertex>& vertices, const std::vector<uint32_t>& indices );
-        ~MeshOld() = default;
-
-        void Draw( Transform& transform ) const;
-        void Destroy();
-
-    private:
-        GLuint m_VAO, m_VBO, m_EBO;
-
-        void InitializeMeshOld();
-};
-
 class Mesh
 {
     public:
@@ -60,7 +41,7 @@ class Mesh
         void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset );
         void EnableIndexBuffer( size_t index );
 
-        void Draw( Transform& t ) const;
+        void DrawPrimitives() const;
 
     private:
         struct IndirectDrawCommand
