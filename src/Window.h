@@ -26,6 +26,7 @@ class Window
         void Initialize();
         void SwapWindow() const;
 
+        float AspectRatio() { return float(m_res.x) / float(m_res.y); }
 
     private:
         glm::uvec2 m_res;

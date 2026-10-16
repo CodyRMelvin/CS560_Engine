@@ -7,10 +7,13 @@
 
 #include "Parser.h"
 #include "Mesh.h"
+#include "Camera.h"
+#include "Application.h"
 
 #include "fastgltf/core.hpp"
 #include "fastgltf/types.hpp"
 #include "fastgltf/tools.hpp"
+
 #include <expected>
 
 fastgltf::Parser Parser::m_parser;
@@ -181,28 +184,63 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     return m;
 }
 
+[[nodiscard]] std::expected< Camera, Error > Parser::ReadCamera( const fastgltf::Camera& cam ) const
+{
+    // Index 0 is projection camera, we do not support orthographic
+    if ( cam.camera.index() == 1 )
+        return std::unexpected( Error( "Orthographic cameras are not supported", Error::errorMinor ) );
+
+    fastgltf::Camera::Perspective camData = std::get<fastgltf::Camera::Perspective>(cam.camera);
+    Camera newCam;
+    newCam.SetViewingDimensions( camData.yfov, Application::Get().GetWindow().AspectRatio() )
+          .SetPlaneDistances( camData.znear, camData.zfar.value() );
+
+    return newCam;
+}
+
 [[nodiscard]] bool Parser::ReadScene() const
 {
     for ( auto nodeIt = m_asset.nodes.begin(); nodeIt != m_asset.nodes.end(); ++nodeIt )
     {
+        Node* newNode = nullptr;
         if ( nodeIt->meshIndex.has_value() )
         {
             auto expectMesh = ReadMesh( m_asset.meshes[ nodeIt->meshIndex.value() ] );
             if ( !expectMesh.has_value() )
             {
                 Error e = expectMesh.error();
-                Logger::LogLine( Logger::severityWarning, "Failed to read mesh {} in file {}. Error: {} Message: {}", 
+                Logger::LogLine( Logger::severityWarning, "Failed to read mesh at node {} in file {}. Error: {} Message: {}", 
                                  std::distance( m_asset.nodes.begin(), nodeIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
                 continue;
             }
 
-            Mesh* m = new Mesh( expectMesh.value() );
-            m->m_ID = Node::NodeLibrary.push_back(m);
-            m->m_parent = m->m_ID;
-            m->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
-            m->m_children.insert( m->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
+            newNode =  new Mesh( expectMesh.value() );
+        }
+        else if ( nodeIt->cameraIndex.has_value() )
+        {
+            auto expectCam = ReadCamera( m_asset.cameras[ nodeIt->cameraIndex.value() ] ); 
+            if ( !expectCam.has_value() )
+            {
+                Error e = expectCam.error();
+                Logger::LogLine( Logger::severityWarning, "Failed to read cam at node {} in file {}. Error: {} Message: {}", 
+                                 std::distance( m_asset.nodes.begin(), nodeIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+                continue;
+            }
+
+            newNode  = new Camera( expectCam.value() );
         }
 
+        if (newNode)
+        {
+            newNode->m_ID = Node::NodeLibrary.push_back(newNode);
+            newNode->m_parent = newNode->m_ID;
+            newNode->m_children.insert(newNode->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
+
+
+            Node3D* derived = dynamic_cast<Node3D*>(newNode); 
+            if (derived)
+                derived->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
+        }
     }
 
     // For each node, assign its children the index of its parent

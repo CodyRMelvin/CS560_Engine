@@ -17,8 +17,10 @@
 
 #include "glad/glad.h"
 #include "SDL3/SDL_events.h"
+
 #include <algorithm>
 #include <stdexcept>
+#include <typeinfo>
 
 Application::Application()
     : m_window()
@@ -59,9 +61,20 @@ void Application::Initialize()
         n->Initialize();
     });
 
-    m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
-                  .SetPlaneDistances( .1f, 100.f )
-                  .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
+    auto camIt = std::find_if( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
+    []( Node* n )
+    {
+        return typeid(*n) == typeid(Camera); 
+    });
+
+    if ( camIt != Node::NodeLibrary.end() )
+        m_activeCamera = *static_cast<Camera*>(*camIt);
+    else
+    {
+        m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
+                      .SetPlaneDistances( .1f, 100.f )
+                      .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
+    }
 }
 
 void Application::Run()

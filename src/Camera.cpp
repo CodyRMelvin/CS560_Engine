@@ -12,7 +12,21 @@
 #include <glm/ext/matrix_transform.hpp>
 
 Camera::Camera()
-    : m_center( { 0, 0, 0 } )
+    : Node3D()
+    , m_center( { 0, 0, 0 } )
+    , m_right( { 1, 0, 0 } )
+    , m_back( { 0, 0, 1 } )
+    , m_up( { 0, 1, 0 } )
+    , m_vpDistance(500.05)
+    , m_nearDistance(.1)
+    , m_farDistance(1000)
+    , m_vpWidth(10.1)
+    , m_vpHeight(10.1)
+{ }
+
+Camera::Camera( uint64_t id, uint64_t parent )
+    : Node3D( id, parent )
+    , m_center( { 0, 0, 0 } )
     , m_right( { 1, 0, 0 } )
     , m_back( { 0, 0, 1 } )
     , m_up( { 0, 1, 0 } )
@@ -24,7 +38,8 @@ Camera::Camera()
 { }
 
 Camera::Camera(const Camera& other)
-    : m_center(other.m_center)
+    : Node3D(other)
+    , m_center(other.m_center)
     , m_right(other.m_right)
     , m_back(other.m_back)
     , m_up(other.m_up)
@@ -38,6 +53,14 @@ Camera::Camera(const Camera& other)
 void Camera::operator=(const Camera& other)
 {
     *this = Camera(other);
+}
+
+void Camera::Initialize() 
+{
+    Transform t = GlobalTransform();
+    glm::vec3 up = t.Rotation().Rotate( { 0, 1, 0 } );
+    glm::vec3 lookat = t.Rotation().Rotate( { 0, 0, -1 } );
+    LookAt( t.Translation(), lookat, up );
 }
 
 Camera& Camera::SetViewingDimensions( float fov, float aspectRatio )

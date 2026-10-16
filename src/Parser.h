@@ -14,6 +14,7 @@
 #include "fastgltf/core.hpp"
 
 typedef class Mesh Mesh;
+typedef class Camera Camera;
 
 class Parser
 {
@@ -24,6 +25,7 @@ class Parser
         ~Parser() = default;
 
         [[nodiscard]] std::expected< Mesh, Error > ReadMesh( const fastgltf::Mesh& mesh ) const;
+        [[nodiscard]] std::expected< Camera, Error > ReadCamera( const fastgltf::Camera& cam ) const;
         [[nodiscard]] bool ReadScene() const;
 
         operator bool() const { return m_opened; }

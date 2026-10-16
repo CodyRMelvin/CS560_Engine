@@ -9,13 +9,19 @@
 #define CAMERA_H
 
 #include "Common.h"
+#include "Node.h"
 
-class Camera
+class Camera : public Node3D
 {
     public:
         Camera();
+        Camera( uint64_t id, uint64_t parent );
         Camera(const Camera& other);
         void operator=(const Camera& other);
+
+        void Initialize() override;
+        void Render() override {}
+        void Destroy() override {}
         
         Camera& SetViewingDimensions( float fov, float aspectRatio );
         Camera& SetPlaneDistances( float near, float far );
