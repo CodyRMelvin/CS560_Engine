@@ -14,13 +14,6 @@
 
 #include "Quaternion.h"
 
-struct Vertex
-{
-    glm::vec3 pos;
-    glm::vec3 nrm;
-    glm::vec2 tex;
-};
-
 inline glm::mat4 AffineInverse(glm::mat4 M)
 {
     glm::mat3 inverse( M );

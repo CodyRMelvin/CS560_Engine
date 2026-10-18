@@ -9,12 +9,14 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Application.h"
+#include "Joint.h"
 
 #include "fastgltf/core.hpp"
 #include "fastgltf/types.hpp"
 #include "fastgltf/tools.hpp"
 
 #include <expected>
+#include <regex>
 
 fastgltf::Parser Parser::m_parser;
 
@@ -72,7 +74,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     m_opened = true;
 }
 
-[[nodiscard]] std::expected< Mesh, Error > Parser::ReadMesh( const fastgltf::Mesh& mesh ) const
+[[nodiscard]] std::expected< Mesh, Error > Parser::ReadMesh( const fastgltf::Mesh& mesh, bool isSkinned ) const
 {
     Mesh m( mesh.primitives.size() );
     for ( auto it = mesh.primitives.begin(); it != mesh.primitives.end(); ++it )
@@ -111,7 +113,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         if ( !posAccessor.bufferViewIndex.has_value() )
             continue;
 
-        m.InitializeVertexBuffer( index, posAccessor.count ); 
+        m.InitializeVertexBuffer( index, posAccessor.count, sizeof(Vertex) ); 
         Vertex* vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) );
         fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, posAccessor, 
         [&vertices]( fastgltf::math::fvec3 pos, size_t idx ) 
@@ -153,6 +155,46 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
             });
             m.UnMapVertexBuffer(index);
             m.EnableVertexAttribute( index, 2, 2, GL_FLOAT, offsetof( Vertex, tex) ); 
+        }
+
+        if (isSkinned)
+        {
+            const auto* jointIt = it->findAttribute("JOINTS_0"); 
+            if ( jointIt != it->attributes.end() )
+            {
+                const fastgltf::Accessor& jointAccessor = m_asset.accessors[ jointIt->accessorIndex ];
+                if ( !jointAccessor.bufferViewIndex.has_value() )
+                    continue;
+
+
+                vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) );
+                fastgltf::iterateAccessorWithIndex<fastgltf::math::ivec4>( m_asset, jointAccessor, 
+                [&vertices]( fastgltf::math::ivec4 joints, size_t idx )
+                {
+                    vertices[idx].boneIds = glm::ivec4( joints.x(), joints.y(), joints.z(), joints.w() );
+                    vertices[idx].weights = glm::vec4(0);
+                });
+                m.UnMapVertexBuffer(index);
+                m.EnableVertexAttribute( index, 3, 4, GL_INT, offsetof( Vertex, boneIds ) ); 
+            }
+
+            const auto* weightIt = it->findAttribute("WEIGHTS_0");
+            if ( weightIt != it->attributes.end() )
+            {
+                const fastgltf::Accessor& weightAccessor = m_asset.accessors[ weightIt->accessorIndex ];
+                if ( !weightAccessor.bufferViewIndex.has_value() )
+                    continue;
+
+
+                vertices = static_cast<Vertex*>( m.MapVertexBuffer( index, GL_WRITE_ONLY ) );
+                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec4>( m_asset, weightAccessor, 
+                [&vertices]( fastgltf::math::fvec4 weights, size_t idx )
+                {
+                    vertices[idx].weights = glm::vec4( weights.x(), weights.y(), weights.z(), weights.w() );
+                });
+                m.UnMapVertexBuffer(index);
+                m.EnableVertexAttribute( index, 4, 4, GL_FLOAT, offsetof( Vertex, weights ) ); 
+            }
         }
 
         const fastgltf::Accessor& indexAccessor = m_asset.accessors[ it->indicesAccessor.value() ];
@@ -198,14 +240,55 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     return newCam;
 }
 
+[[nodiscard]] std::expected< Mesh::Skin, Error > Parser::ReadSkin( const fastgltf::Skin& skin ) const
+{
+    if ( !skin.inverseBindMatrices.has_value() )
+        return std::unexpected( Error( "No index for matrix accessor", Error::errorMinor ) );
+
+    Mesh::Skin s;
+    const fastgltf::Accessor& matAccessor = m_asset.accessors[ skin.inverseBindMatrices.value() ];
+    if ( !matAccessor.bufferViewIndex.has_value() )
+        return std::unexpected( Error( "No index for matrix accessor", Error::errorMinor ) );
+
+    fastgltf::iterateAccessorWithIndex<fastgltf::math::fmat4x4>( m_asset, matAccessor, 
+    [&s]( fastgltf::math::fmat4x4 mat, size_t idx )
+    {
+        glm::mat4 m = glm::make_mat4( mat.data() );
+        s.inverseBindMatrices.push_back(m);
+    });
+
+    s.joints.insert( s.joints.end(), skin.joints.begin(), skin.joints.end());
+
+    if ( skin.skeleton.has_value() )
+        s.skeleton = skin.skeleton.value();
+    else
+        s.skeleton = s.joints[0];
+
+    for ( int i = 0; i < s.joints.size(); ++i )
+    {
+        fastgltf::Node node = m_asset.nodes[ s.joints[i] ];
+        Joint* j = new Joint( s.joints[i], s.joints[i] );
+        j->matrixIndex = i;
+        j->LocalTransform( std::get<fastgltf::TRS>(node.transform) );
+        j->m_children.insert( j->m_children.begin(), node.children.begin(), node.children.end() );
+
+        Node::NodeLibrary[ s.joints[i] ] = j;
+    }
+
+    return s;
+}
+
 [[nodiscard]] bool Parser::ReadScene() const
 {
     for ( auto nodeIt = m_asset.nodes.begin(); nodeIt != m_asset.nodes.end(); ++nodeIt )
     {
+
         Node* newNode = nullptr;
         if ( nodeIt->meshIndex.has_value() )
         {
-            auto expectMesh = ReadMesh( m_asset.meshes[ nodeIt->meshIndex.value() ] );
+            bool hasSkin = nodeIt->skinIndex.has_value();
+            auto expectMesh = ReadMesh( m_asset.meshes[ nodeIt->meshIndex.value() ], hasSkin );
+
             if ( !expectMesh.has_value() )
             {
                 Error e = expectMesh.error();
@@ -214,7 +297,21 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 continue;
             }
 
-            newNode =  new Mesh( expectMesh.value() );
+            if (hasSkin)
+            {
+                auto expectSkin = ReadSkin( m_asset.skins[ nodeIt->skinIndex.value() ] );
+                if ( !expectSkin.has_value() )
+                {
+                    Error e = expectSkin.error();
+                    Logger::LogLine( Logger::severityWarning, "Failed to read skeleton at node {} in file {}. Error: {} Message: {}", 
+                                     std::distance( m_asset.nodes.begin(), nodeIt ), m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+                    continue;
+                }
+
+                expectMesh.value().SetSkin( expectSkin.value() );
+            }
+
+            newNode = new Mesh( expectMesh.value() );
         }
         else if ( nodeIt->cameraIndex.has_value() )
         {
@@ -232,7 +329,8 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
 
         if (newNode)
         {
-            newNode->m_ID = Node::NodeLibrary.push_back(newNode);
+            newNode->m_ID = std::distance( m_asset.nodes.begin(), nodeIt );
+            Node::NodeLibrary[newNode->m_ID] = newNode;
             newNode->m_parent = newNode->m_ID;
             newNode->m_children.insert(newNode->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
 
@@ -245,13 +343,13 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
 
     // For each node, assign its children the index of its parent
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
-    []( Node* n )
+    []( auto& pair )
     {
-        std::for_each( n->m_children.begin(), n->m_children.end(),
-        [&n]( uint64_t idx )
+        std::for_each( pair.second->m_children.begin(), pair.second->m_children.end(),
+        [&pair]( uint64_t idx )
         {
             Node* child = Node::NodeLibrary[idx];
-            child->m_parent = n->m_ID; 
+            child->m_parent = pair.second->m_ID; 
         });
     });
 

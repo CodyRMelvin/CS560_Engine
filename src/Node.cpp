@@ -9,7 +9,7 @@
 #include "Transform.h"
 #include <sys/socket.h>
 
-siv::Vector<Node*> Node::NodeLibrary;
+std::unordered_map< uint64_t, Node* > Node::NodeLibrary;
 
 Node::Node( uint64_t id, uint64_t parent ) 
     : m_ID(id)
@@ -111,10 +111,10 @@ void Node3D::LocalTransform( const Transform& localTransform )
 void DeleteAllNodes()
 {
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
-    []( Node* n )
+    []( auto& pair )
     {
-        delete n;
-        n = nullptr;
+        delete pair.second;
+        pair.second = nullptr;
     });
 
     Node::NodeLibrary.clear();

@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #include "Mesh.h"
+#include "RenderAnimatedIndirectCMD.h"
 #include "ShaderLibrary.h"
 #include "RenderDevice.h"
 #include "RenderIndirectCMD.h"  
@@ -63,12 +64,32 @@ void Mesh::Initialize()
 
 void Mesh::Render()
 {
-    RenderIndirectCMD* cmd = new RenderIndirectCMD();
-    cmd->mesh = m_ID;
-    cmd->transform = m_transform;
-    cmd->pipeline = m_pipeline;
+    if ( m_skin.has_value() )
+    {
+        static Pipeline p;
+        if ( p.GLPipeline() == 0 ) 
+        {
+            p.Initialize();
+            p.Shader( ShaderLibrary::GetShader( "Animation", Shader::shaderTypeVertex) )
+             .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
+            p.Bind();
+        }
 
-    RenderDevice::Get().Push(cmd); 
+        RenderAnimatedIndirectCMD* cmd = new RenderAnimatedIndirectCMD();
+        cmd->meshID = m_ID;
+        cmd->transform = m_transform;
+        cmd->pipeline = p;
+        RenderDevice::Get().Push(cmd);
+    }
+    else
+    {
+        RenderIndirectCMD* cmd = new RenderIndirectCMD();
+        cmd->mesh = m_ID;
+        cmd->transform = m_transform;
+        cmd->pipeline = m_pipeline;
+
+        RenderDevice::Get().Push(cmd); 
+    }
 }
 
 void Mesh::Destroy()
@@ -109,7 +130,7 @@ void Mesh::InitializeVertexArray( size_t index, GLenum primitiveType )
     p.cmd.firstIndex = 0;
 }
 
-void Mesh::InitializeVertexBuffer( size_t index, size_t count )
+void Mesh::InitializeVertexBuffer( size_t index, size_t count, size_t vertexSize )
 {
     if ( m_primitives.size() <= index )
         m_primitives.resize( index + 1 );
@@ -124,7 +145,7 @@ void Mesh::InitializeVertexBuffer( size_t index, size_t count )
 
 
     glCreateBuffers( 1, &p.VBO );
-    glNamedBufferData( p.VBO, count * sizeof(Vertex), nullptr, GL_STATIC_DRAW );
+    glNamedBufferData( p.VBO, count * vertexSize, nullptr, GL_STATIC_DRAW );
 }
 
 void Mesh::InitializeIndexBuffer( size_t index, size_t count, GLenum indexType )
@@ -246,7 +267,7 @@ void Mesh::UnMapIndexBuffer( size_t index )
     glUnmapNamedBuffer(p.EBO);
 }
 
-void Mesh::EnableVertexAttribute( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset )
+void Mesh::EnableVertexAttribute( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize )
 {
     if ( m_primitives.size() <= primIndex )
     {
@@ -258,7 +279,7 @@ void Mesh::EnableVertexAttribute( size_t primIndex, GLuint attribIndex, GLint si
     glEnableVertexArrayAttrib( p.VAO, attribIndex );
     glVertexArrayAttribFormat( p.VAO, attribIndex, size, type, GL_FALSE, offset );
     glVertexArrayAttribBinding( p.VAO, attribIndex, attribIndex );
-    glVertexArrayVertexBuffer( p.VAO, attribIndex, p.VBO, offset, sizeof(Vertex) );
+    glVertexArrayVertexBuffer( p.VAO, attribIndex, p.VBO, offset, vertexSize );
 }
 
 void Mesh::EnableIndexBuffer( size_t index )

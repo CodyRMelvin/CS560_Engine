@@ -39,9 +39,10 @@ class Pipeline
         void ActiveShader( const Shader::ShaderType type ) const;
 
         void UniformMat( int location, const glm::mat4& uniform ) const;
-        template <size_t S> void UniformVec( int location, glm::vec< S, float > uniform ) const;
-        void UniformFloat( int location, float uniform ) const;
-        void UniformInt( int location, int uniform ) const;
+        void UniformMat( int location, glm::mat4* mats, size_t size ) const;
+        template <size_t S> void UniformVec( int location, glm::vec< S, float > uniform  ) const;
+        void UniformFloat( int location, float uniform  ) const;
+        void UniformInt( int location, int uniform  ) const;
 
         bool IsValid() const;
         operator bool() const;

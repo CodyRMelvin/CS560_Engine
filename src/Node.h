@@ -6,13 +6,12 @@
 //**************************************************************************************************
 
 #pragma once
+#include <unordered_map>
 #ifndef STUB_H
 #define STUB_H
 
 #include "Common.h"
 #include "Transform.h"
-
-#include "external/SIV/index_vector.hpp"
 
 //typedef class Parser Parser;
 
@@ -20,7 +19,7 @@ class Node
 {
     public:
 
-        static siv::Vector<Node*> NodeLibrary;
+        static std::unordered_map< uint64_t, Node*> NodeLibrary;
 
         Node() = default;
         Node( uint64_t id, uint64_t parent );

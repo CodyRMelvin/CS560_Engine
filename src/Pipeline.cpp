@@ -94,6 +94,11 @@ void Pipeline::UniformMat( int location, const glm::mat4& uniform ) const
     glUniformMatrix4fv( location, 1, GL_FALSE, glm::value_ptr(uniform) );
 }
 
+void Pipeline::UniformMat( int location, glm::mat4* mats, size_t size ) const
+{
+    glUniformMatrix4fv( location, size, GL_FALSE, glm::value_ptr(*mats) );
+}
+
 template <size_t S> void Pipeline::UniformVec( int location, glm::vec< S, float > uniform ) const
 {
     glUniform4fv( location, S, glm::value_ptr(uniform) );

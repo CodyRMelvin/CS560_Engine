@@ -56,19 +56,19 @@ void Application::Initialize()
     }
 
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(), 
-    []( Node* n )
+    []( auto& pair )
     {
-        n->Initialize();
+        pair.second->Initialize();
     });
 
     auto camIt = std::find_if( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
-    []( Node* n )
+    []( auto& pair )
     {
-        return typeid(*n) == typeid(Camera); 
+        return typeid(*pair.second) == typeid(Camera); 
     });
 
     if ( camIt != Node::NodeLibrary.end() )
-        m_activeCamera = *static_cast<Camera*>(*camIt);
+        m_activeCamera = *static_cast<Camera*>(camIt->second);
     else
     {
         m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
@@ -85,9 +85,9 @@ void Application::Run()
     while (!m_shouldQuit)
     {
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
-        []( Node* n )
+        []( auto& pair )
         {
-            n->Render();
+            pair.second->Render();
         });
 
         RenderDevice::Get().ExecuteCommands();
