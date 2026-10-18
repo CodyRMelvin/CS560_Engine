@@ -25,11 +25,15 @@ class Application
 
         Window& GetWindow() { return m_window; }
         Camera& GetActiveCamera() { return m_activeCamera; }
+        float GetDeltaTime() const { return m_deltaTime; }
 
     private:
         Window m_window;
         Camera m_activeCamera;
         bool m_shouldQuit;
+        std::chrono::time_point<std::chrono::steady_clock> m_now;
+        std::chrono::time_point<std::chrono::steady_clock> m_previous;
+        float m_deltaTime;
 
         Application();
 };

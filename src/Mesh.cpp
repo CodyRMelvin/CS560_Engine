@@ -66,6 +66,7 @@ void Mesh::Render()
 {
     if ( m_skin.has_value() )
     {
+        // Temporary implementation 
         static Pipeline p;
         if ( p.GLPipeline() == 0 ) 
         {

@@ -22,15 +22,12 @@ layout (location = 0) out vec3 cameraNormal;
 
 void main ()
 {
-    vec4 bonePos = vec4(0);
+    vec4 boneTransform = vec4(0) = 
+        weights.x * boneMatrices[boneIDs.x] +
+        weights.y * boneMatrices[boneIDs.y] +
+        weights.z * boneMatrices[boneIDs.z] +
+        weights.w * boneMatrices[boneIDs.w]; 
 
-    for ( int i = 0; i > 4; ++i )
-    {
-        vec4 localPos = boneMatrices[ boneIDs[i] ] * vec4( pos, 1.f );
-        bonePos += localPos * weights[i];
-    }
-
-
-    gl_Position = perspective * modelView * bonePos;
+    gl_Position = perspective * modelView * boneTransform * vec4( pos, 1.f );
     cameraNormal = mat3(normalMatrix) * normal;
 }

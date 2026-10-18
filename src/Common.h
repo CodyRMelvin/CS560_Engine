@@ -20,3 +20,4 @@
 #include <cmath>
 #include <expected>
 #include <unordered_map>
+#include <variant>

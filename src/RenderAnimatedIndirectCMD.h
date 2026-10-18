@@ -1,8 +1,8 @@
 //**************************************************************************************************
 // File   : RenderAnimatedIndirectCMD.h
 // Author : Cody Melvin
-// Date   : 2026/xx/xx
-// Brief  : 
+// Date   : 2026/10/17
+// Brief  : Render command for animated meshes
 //**************************************************************************************************
 
 #pragma once
@@ -53,11 +53,12 @@ class RenderAnimatedIndirectCMD: public ICommand
             };
             GetJoints( jointIDs.front() );
 
+            glm::mat4 inverseGlobal = glm::inverse( mesh->GlobalTransform().Matrix() );
             std::for_each( jointIDs.begin(), jointIDs.end(),
-            [&boneMats]( uint64_t boneID )
+            [ &boneMats, &inverseGlobal ]( uint64_t boneID )
             {
                 Joint* j = static_cast<Joint*>( Node::NodeLibrary[boneID] );
-                boneMats[j->matrixIndex] = boneMats[j->matrixIndex] * j->GlobalTransform().Matrix();
+                boneMats[j->matrixIndex] = inverseGlobal * j->LocalTransform().Matrix() * boneMats[j->matrixIndex];
             }); 
 
             pipeline.Bind();

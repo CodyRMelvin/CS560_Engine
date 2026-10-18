@@ -75,6 +75,8 @@ void Application::Initialize()
                       .SetPlaneDistances( .1f, 100.f )
                       .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
     }
+
+    m_previous = std::chrono::steady_clock::now();
 }
 
 void Application::Run()
@@ -84,6 +86,9 @@ void Application::Run()
 
     while (!m_shouldQuit)
     {
+        m_now = std::chrono::steady_clock::now();
+        m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>( m_now - m_previous ).count() / 1000.f;
+
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )
         {
