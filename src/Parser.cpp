@@ -10,8 +10,11 @@
 #include "Camera.h"
 #include "Application.h"
 #include "Joint.h"
+#include "Animation.h"
 
+#include "Shader.h"
 #include "fastgltf/core.hpp"
+#include "fastgltf/math.hpp"
 #include "fastgltf/types.hpp"
 #include "fastgltf/tools.hpp"
 
@@ -121,6 +124,8 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
             vertices[idx].pos = glm::vec3( pos.x(), pos.y(), pos.z() );
             vertices[idx].nrm = glm::vec3();
             vertices[idx].tex = glm::vec2();
+            vertices[idx].boneIds = glm::uvec4(0);
+            vertices[idx].weights = glm::vec4(0);
         });
         m.UnMapVertexBuffer(index); 
         m.EnableVertexAttribute( index, 0, 3, GL_FLOAT, offsetof( Vertex, pos ) ); 
@@ -172,10 +177,9 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 [&vertices]( fastgltf::math::ivec4 joints, size_t idx )
                 {
                     vertices[idx].boneIds = glm::ivec4( joints.x(), joints.y(), joints.z(), joints.w() );
-                    vertices[idx].weights = glm::vec4(0);
                 });
                 m.UnMapVertexBuffer(index);
-                m.EnableVertexAttribute( index, 3, 4, GL_INT, offsetof( Vertex, boneIds ) ); 
+                m.EnableVertexAttributeI( index, 3, 4, GL_UNSIGNED_INT, offsetof( Vertex, boneIds ) ); 
             }
 
             const auto* weightIt = it->findAttribute("WEIGHTS_0");
@@ -278,6 +282,65 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     return s;
 }
 
+[[nodiscard]] std::expected< Animation, Error > Parser::ReadAnimation( const fastgltf::Animation& animation ) const
+{
+    Animation anim;
+    for ( const fastgltf::AnimationChannel& channel : animation.channels )
+    {
+        if ( !channel.nodeIndex.value() )
+            return std::unexpected( Error( "No node index in animaation channel", Error::errorMinor ) );
+
+        Animation::Channel c = {0};
+        c.target = channel.nodeIndex.value();
+        c.path = static_cast<Animation::Path>( static_cast<int>(channel.path) - 1 );
+
+        const fastgltf::AnimationSampler& sampler = animation.samplers[channel.samplerIndex];
+        c.interpolation = static_cast<Animation::Interpolation>(sampler.interpolation);
+
+        const fastgltf::Accessor& inputAccessor = m_asset.accessors[sampler.inputAccessor];
+        const fastgltf::Accessor& outputAccessor = m_asset.accessors[sampler.outputAccessor];
+        c.frames.resize(inputAccessor.count);
+
+        fastgltf::iterateAccessorWithIndex<float>( m_asset, inputAccessor, 
+        [&c]( float input, size_t idx )
+        {
+            c.frames[idx].time = input;
+        }); 
+
+        switch(c.path)
+        {
+            case Animation::pathTranslation:
+                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, outputAccessor, 
+                [&c]( fastgltf::math::fvec3 v, size_t idx )
+                {
+                    c.frames[idx].output.emplace<Animation::pathTranslation>( v.x(), v.y(), v.z() ); 
+                }); 
+                break;
+            case Animation::pathRotation:
+                fastgltf::iterateAccessorWithIndex<fastgltf::math::fquat>( m_asset, outputAccessor, 
+                [&c]( fastgltf::math::fquat quat, size_t idx )
+                {
+                    c.frames[idx].output.emplace<Animation::pathRotation>( quat.x(),  quat.y(),  quat.z(),  quat.w() ); 
+                }); 
+                break;
+
+            case Animation::pathScale:
+                fastgltf::iterateAccessorWithIndex<fastgltf::math::fvec3>( m_asset, outputAccessor, 
+                [&c]( fastgltf::math::fvec3 v, size_t idx )
+                {
+                    c.frames[idx].output.emplace<Animation::pathScale>( v.x(), v.y(), v.z() ); 
+                }); 
+                break;
+
+            default: break;
+        }
+
+        anim.AddChannel(c); 
+    }
+
+    return anim;
+}
+
 [[nodiscard]] bool Parser::ReadScene() const
 {
     for ( auto nodeIt = m_asset.nodes.begin(); nodeIt != m_asset.nodes.end(); ++nodeIt )
@@ -339,6 +402,23 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
             if (derived)
                 derived->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
         }
+    }
+
+    for ( const fastgltf::Animation& animation : m_asset.animations )
+    {
+        auto expectAnim = ReadAnimation(animation);
+
+        if ( !expectAnim.has_value() )
+        {
+            Error e = expectAnim.error();
+            Logger::LogLine( Logger::severityWarning, "Failed to read animation {} in file {}. Error: {} Message: {}", 
+                             animation.name, m_filePath.string(), Error::TypeString( e.GetType() ), e.What() );
+            continue;
+        }
+
+        Animation* newAnim = new Animation( expectAnim.value() );
+        newAnim->m_ID = Node::NodeLibrary.size();
+        Node::NodeLibrary[newAnim->m_ID] = newAnim;
     }
 
     // For each node, assign its children the index of its parent

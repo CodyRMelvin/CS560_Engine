@@ -142,6 +142,7 @@ void Application::Run()
 void Application::Shutdown()
 {
     Logger::LogLine( Logger::severityInfo, "Shutting down application" );
+    m_window.Destroy();
     DeleteAllNodes();
     ShaderLibrary::DeleteShaders();
     Logger::Shutdown();

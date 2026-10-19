@@ -28,10 +28,10 @@ class Quat
                 float S;
                 glm::vec3 V;
             };
-            struct
-            {
+            //struct
+            //{
                 glm::vec4 d;
-            };
+            //};
         };
 
         // Rule of three
@@ -39,7 +39,7 @@ class Quat
         Quat( float x, float y, float z, float w ) : d(w, x, y, z ) {}
         Quat( glm::vec4 d ) : d(d) {}
         Quat( float rads, glm::vec3 axis ) : S( std::cos( rads / 2.f ) ), V( std::sin( rads / 2.f ) * axis ) {}
-        Quat( const Quat& other ) : V(other.V), S(other.S) {}
+        Quat( const Quat& other ) : d(other.d) {}
         Quat& operator=( const Quat& other );
         ~Quat() = default;
 

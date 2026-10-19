@@ -41,24 +41,17 @@ class RenderAnimatedIndirectCMD: public ICommand
 
             Mesh::Skin skin = mesh->GetSkin();
 
-            std::vector<glm::mat4> boneMats( skin.inverseBindMatrices.begin(), skin.inverseBindMatrices.end() );
-            std::vector<uint64_t> jointIDs;
-            jointIDs.push_back(skin.skeleton);
-
-            // Recursive lambda to populate jointIDs 
-            std::function< void(uint64_t) > GetJoints = [ &jointIDs, &GetJoints ](uint64_t index)
-            {
-                std::vector<uint64_t> children = Node::NodeLibrary[index]->Children();
-                std::for_each( children.begin(), children.end(), GetJoints );
-            };
-            GetJoints( jointIDs.front() );
+            std::vector<glm::mat4> boneMats;
+            boneMats.resize( skin.inverseBindMatrices.size() );
 
             glm::mat4 inverseGlobal = glm::inverse( mesh->GlobalTransform().Matrix() );
-            std::for_each( jointIDs.begin(), jointIDs.end(),
-            [ &boneMats, &inverseGlobal ]( uint64_t boneID )
+            std::for_each( skin.joints.begin(), skin.joints.end(),
+            [ &boneMats, &inverseGlobal, &skin ]( uint64_t boneID )
             {
-                Joint* j = static_cast<Joint*>( Node::NodeLibrary[boneID] );
-                boneMats[j->matrixIndex] = inverseGlobal * j->LocalTransform().Matrix() * boneMats[j->matrixIndex];
+                Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[boneID] );
+                if (!j)
+                    return;
+                boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransform().Matrix() * skin.inverseBindMatrices[j->matrixIndex];
             }); 
 
             pipeline.Bind();

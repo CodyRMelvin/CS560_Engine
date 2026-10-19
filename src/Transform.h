@@ -29,6 +29,10 @@ class Transform
         inline glm::vec3 Translation() const { return m_translation; }
         inline Quat Rotation() const { return m_rotation; }
 
+        inline glm::vec3& Scale() { return m_scale; }
+        inline glm::vec3& Translation() { return m_translation; }
+        inline Quat& Rotation() { return m_rotation; }
+
         inline void Scale(glm::vec3 scale) 
         { 
             m_scale = scale; 

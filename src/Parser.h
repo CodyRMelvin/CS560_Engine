@@ -17,6 +17,7 @@
 typedef class Camera Camera;
 typedef class Node3D Node3D;
 typedef class Joint Joint;
+typedef class Animation Animation;
 
 class Parser
 {
@@ -29,6 +30,7 @@ class Parser
         [[nodiscard]] std::expected< Mesh, Error > ReadMesh( const fastgltf::Mesh& mesh, bool isSkinned = false ) const;
         [[nodiscard]] std::expected< Camera, Error > ReadCamera( const fastgltf::Camera& cam ) const;
         [[nodiscard]] std::expected< Mesh::Skin, Error > ReadSkin( const fastgltf::Skin& skin ) const;
+        [[nodiscard]] std::expected< Animation, Error > ReadAnimation( const fastgltf::Animation& animation ) const;
         [[nodiscard]] bool ReadScene() const;
 
         operator bool() const { return m_opened; }

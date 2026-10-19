@@ -30,17 +30,10 @@ Window::Window( uint32_t width, uint32_t height )
     , m_p_context(nullptr)
 { }
 
-Window::~Window()
-{
-    Logger::LogLine( Logger::severityInfo, "SDL_Shutdown" );
-    SDL_GL_DestroyContext(m_p_context);
-    SDL_DestroyWindow(m_p_window);
-}
-
 void Window::Initialize()
 {
-    int result = SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS );
-    if ( result < 0 )
+    bool result = SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS );
+    if (!result)
     {
         std::runtime_error e( std::format( "SDL_Init error {}", SDL_GetError() ) );
         throw e;
@@ -65,6 +58,13 @@ void Window::Initialize()
 
     SDL_GL_SetSwapInterval(1);
     Logger::LogLine( Logger::severityInfo, "SDL3 intialized" );
+}
+
+void Window::Destroy()
+{
+    Logger::LogLine( Logger::severityInfo, "SDL_Shutdown" );
+    SDL_GL_DestroyContext(m_p_context);
+    SDL_DestroyWindow(m_p_window);
 }
 
 void Window::SwapWindow() const

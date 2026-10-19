@@ -21,9 +21,10 @@ class Window
         Window();
         Window(glm::uvec2 res);
         Window( uint32_t width, uint32_t height );        
-        ~Window();
+        ~Window() = default;
 
         void Initialize();
+        void Destroy();
         void SwapWindow() const;
 
         float AspectRatio() { return float(m_res.x) / float(m_res.y); }

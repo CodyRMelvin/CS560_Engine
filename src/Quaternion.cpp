@@ -9,10 +9,7 @@
 
 Quat& Quat::operator=( const Quat& other )
 {
-    if ( this == &other )
-        return *this;
-
-    this->d = other.d;
+    d = other.d;
     return *this;
 }
 

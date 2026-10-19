@@ -1,0 +1,113 @@
+==2107203== Memcheck, a memory error detector
+==2107203== Copyright (C) 2002-2026, and GNU GPL'd, by Julian Seward et al.
+==2107203== Using Valgrind-3.27.1 and LibVEX; rerun with -h for copyright info
+==2107203== Command: bin/Release/CS560
+==2107203== Parent PID: 2043446
+==2107203== 
+==2107203== realloc() with size 0
+==2107203==    at 0x4849835: realloc (vg_replace_malloc.c:1741)
+==2107203==    by 0x148524BE: ??? (in /usr/lib64/libnvidia-glcore.so.610.57.04)
+==2107203==    by 0x13CE38F6: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13D3F6B1: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13CE3012: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x40054CC: _dl_init (dl-init.c:121)
+==2107203==    by 0x40017D6: _dl_catch_exception (dl-catch.c:215)
+==2107203==    by 0x400C598: dl_open_worker (dl-open.c:799)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203==    by 0x400CA69: _dl_open (dl-open.c:900)
+==2107203==    by 0x50130C3: dlopen_doit (dlopen.c:56)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203==  Address 0x57b4fe0 is 0 bytes after a block of size 0 alloc'd
+==2107203==    at 0x4841AE6: malloc (vg_replace_malloc.c:447)
+==2107203==    by 0x148524AE: ??? (in /usr/lib64/libnvidia-glcore.so.610.57.04)
+==2107203==    by 0x13CE38F6: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13D3F6B1: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13CE3012: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x40054CC: _dl_init (dl-init.c:121)
+==2107203==    by 0x40017D6: _dl_catch_exception (dl-catch.c:215)
+==2107203==    by 0x400C598: dl_open_worker (dl-open.c:799)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203==    by 0x400CA69: _dl_open (dl-open.c:900)
+==2107203==    by 0x50130C3: dlopen_doit (dlopen.c:56)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203== 
+==2107203== Unsafe allocation with size of zero is implementation-defined
+==2107203==    at 0x484A35C: posix_memalign (vg_replace_malloc.c:2166)
+==2107203==    by 0x148524F5: ??? (in /usr/lib64/libnvidia-glcore.so.610.57.04)
+==2107203==    by 0x13CE38F6: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13D3F6B1: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x13CE3012: ??? (in /usr/lib64/libGLX_nvidia.so.610.57.04)
+==2107203==    by 0x40054CC: _dl_init (dl-init.c:121)
+==2107203==    by 0x40017D6: _dl_catch_exception (dl-catch.c:215)
+==2107203==    by 0x400C598: dl_open_worker (dl-open.c:799)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203==    by 0x400CA69: _dl_open (dl-open.c:900)
+==2107203==    by 0x50130C3: dlopen_doit (dlopen.c:56)
+==2107203==    by 0x4001728: _dl_catch_exception (dl-catch.c:241)
+==2107203== 
+==2107203== Invalid write of size 8
+==2107203==    at 0x42FBA6: Quat::operator=(Quat const&) (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x401613: Animation::Render() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x403E4A: Application::Run() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x41811E: main (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==  Address 0x5620488 is 0 bytes after a block of size 72 alloc'd
+==2107203==    at 0x484226C: operator new(unsigned long) (vg_replace_malloc.c:501)
+==2107203==    by 0x426083: Parser::ReadScene() const (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4037E2: Application::Initialize() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x418116: main (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203== 
+==2107203== 
+==2107203== HEAP SUMMARY:
+==2107203==     in use at exit: 816,820 bytes in 2,165 blocks
+==2107203==   total heap usage: 41,467 allocs, 39,302 frees, 735,399,902 bytes allocated
+==2107203== 
+==2107203== 8 bytes in 1 blocks are indirectly lost in loss record 51 of 666
+==2107203==    at 0x484226C: operator new(unsigned long) (vg_replace_malloc.c:501)
+==2107203==    by 0x42C195: void std::vector<unsigned long, std::allocator<unsigned long> >::_M_range_insert<__gnu_cxx::__normal_iterator<unsigned long*, std::vector<unsigned long, std::pmr::polymorphic_allocator<unsigned long> > > >(__gnu_cxx::__normal_iterator<unsigned long*, std::vector<unsigned long, std::allocator<unsigned long> > >, __gnu_cxx::__normal_iterator<unsigned long*, std::vector<unsigned long, std::pmr::polymorphic_allocator<unsigned long> > >, __gnu_cxx::__normal_iterator<unsigned long*, std::vector<unsigned long, std::pmr::polymorphic_allocator<unsigned long> > >, std::forward_iterator_tag) (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4227D8: Parser::ReadSkin(fastgltf::Skin const&) const (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4252A0: Parser::ReadScene() const (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4037E2: Application::Initialize() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x418116: main (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203== 
+==2107203== 24 bytes in 1 blocks are still reachable in loss record 194 of 666
+==2107203==    at 0x4841AE6: malloc (vg_replace_malloc.c:447)
+==2107203==    by 0x51C8316: append_pending_request (xcb_io.c:157)
+==2107203==    by 0x51D3AC0: _XReply (xcb_io.c:694)
+==2107203==    by 0x51D41F4: XSync (Sync.c:44)
+==2107203==    by 0x49C4A9C: X11_HideWindow (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497E91E: SDL_HideWindow_REAL (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497DB03: SDL_DestroyWindow_REAL (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x435D86: Window::Destroy() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4042D6: Application::Shutdown() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x418126: main (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203== 
+==2107203== 176 (168 direct, 8 indirect) bytes in 1 blocks are definitely lost in loss record 542 of 666
+==2107203==    at 0x484226C: operator new(unsigned long) (vg_replace_malloc.c:501)
+==2107203==    by 0x422758: Parser::ReadSkin(fastgltf::Skin const&) const (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4252A0: Parser::ReadScene() const (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x4037E2: Application::Initialize() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x418116: main (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203== 
+==2107203== 416 bytes in 2 blocks are still reachable in loss record 582 of 666
+==2107203==    at 0x4841AE6: malloc (vg_replace_malloc.c:447)
+==2107203==    by 0x51CD4ED: _XEnq (XlibInt.c:740)
+==2107203==    by 0x51D29DE: handle_response (xcb_io.c:426)
+==2107203==    by 0x51D3CAF: _XReply (xcb_io.c:731)
+==2107203==    by 0x51D41F4: XSync (Sync.c:44)
+==2107203==    by 0x49C4873: X11_ShowWindow (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497FA11: SDL_ShowWindow_REAL (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497DF91: SDL_FinishWindowCreation (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497D815: SDL_CreateWindowWithProperties_REAL (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x497E140: SDL_CreateWindow_REAL (in /home/cmelvin/Dev/CS560_Engine/build/dependencies/external/SDL/Release/libSDL3.so.0.3.0)
+==2107203==    by 0x435A4A: Window::Initialize() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203==    by 0x403472: Application::Initialize() (in /home/cmelvin/Dev/CS560_Engine/bin/Release/CS560)
+==2107203== 
+==2107203== LEAK SUMMARY:
+==2107203==    definitely lost: 168 bytes in 1 blocks
+==2107203==    indirectly lost: 8 bytes in 1 blocks
+==2107203==      possibly lost: 0 bytes in 0 blocks
+==2107203==    still reachable: 440 bytes in 3 blocks
+==2107203==         suppressed: 816,204 bytes in 2,160 blocks
+==2107203== 
+==2107203== For lists of detected and suppressed errors, rerun with: -s
+==2107203== ERROR SUMMARY: 105 errors from 4 contexts (suppressed: 3 from 3)

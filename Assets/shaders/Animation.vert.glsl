@@ -3,7 +3,7 @@
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 tex;
-layout (location = 3) in ivec4 boneIDs;
+layout (location = 3) in uvec4 boneIDs;
 layout (location = 4) in vec4 weights;
 
 layout (location = 0) uniform mat4 modelView;
@@ -22,7 +22,7 @@ layout (location = 0) out vec3 cameraNormal;
 
 void main ()
 {
-    vec4 boneTransform = vec4(0) = 
+    mat4 boneTransform = 
         weights.x * boneMatrices[boneIDs.x] +
         weights.y * boneMatrices[boneIDs.y] +
         weights.z * boneMatrices[boneIDs.z] +

@@ -17,12 +17,14 @@ Mesh::Mesh( uint32_t id, uint32_t parent )
     : Node3D( id, parent )
     , m_primitives()
     , m_drawBuffer()
+    , m_skin()
 { }
 
 Mesh::Mesh( const Mesh& other )
     : Node3D(other)
     , m_primitives(other.m_primitives) 
     , m_drawBuffer(other.m_drawBuffer)
+    , m_skin(other.m_skin)
 { }
 
 Mesh& Mesh::operator=( const Mesh& other )
@@ -34,6 +36,7 @@ Mesh& Mesh::operator=( const Mesh& other )
 
     this->m_drawBuffer = other.m_drawBuffer;
     this->m_primitives = std::vector<Primitive>(other.m_primitives);
+    this->m_skin = other.m_skin;
     return *this;
 }
 
@@ -278,7 +281,22 @@ void Mesh::EnableVertexAttribute( size_t primIndex, GLuint attribIndex, GLint si
 
     Primitive& p = m_primitives[primIndex];
     glEnableVertexArrayAttrib( p.VAO, attribIndex );
-    glVertexArrayAttribFormat( p.VAO, attribIndex, size, type, GL_FALSE, offset );
+    glVertexArrayAttribFormat( p.VAO, attribIndex, size, type, GL_FALSE, 0 );
+    glVertexArrayAttribBinding( p.VAO, attribIndex, attribIndex );
+    glVertexArrayVertexBuffer( p.VAO, attribIndex, p.VBO, offset, vertexSize );
+}
+
+void Mesh::EnableVertexAttributeI( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize )
+{
+    if ( m_primitives.size() <= primIndex )
+    {
+        Logger::LogLine( Logger::severityError, "Primitive at index {} does not exist", primIndex );
+        return;
+    }
+
+    Primitive& p = m_primitives[primIndex];
+    glEnableVertexArrayAttrib( p.VAO, attribIndex );
+    glVertexArrayAttribIFormat( p.VAO, attribIndex, size, type, 0 );
     glVertexArrayAttribBinding( p.VAO, attribIndex, attribIndex );
     glVertexArrayVertexBuffer( p.VAO, attribIndex, p.VBO, offset, vertexSize );
 }

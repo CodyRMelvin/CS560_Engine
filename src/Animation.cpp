@@ -10,8 +10,6 @@
 #include "Common.h"
 #include "Application.h"
 
-#include <variant>
-
 Animation::Animation( uint64_t id, uint64_t parent )
     : Node( id, parent )
     , m_channels()
@@ -39,6 +37,7 @@ void Animation::Initialize()
 void Animation::Render()
 {
     float dt = Application::Get().GetDeltaTime();
+    dt = .5;
 
     std::for_each( m_channels.begin(), m_channels.end(), 
     [dt]( Channel& channel )

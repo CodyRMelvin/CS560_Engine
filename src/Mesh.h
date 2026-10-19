@@ -61,6 +61,7 @@ class Mesh : public Node3D
         virtual void UnMapVertexBuffer( size_t index );
         virtual void UnMapIndexBuffer( size_t index );
         virtual void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
+        virtual void EnableVertexAttributeI( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
         virtual void EnableIndexBuffer( size_t index );
 
         virtual void DrawPrimitives() const;

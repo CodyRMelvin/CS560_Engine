@@ -64,6 +64,7 @@ class Node3D : public Node
 
         Transform GlobalTransform() const;
         Transform LocalTransform() const;
+        Transform& LocalTransform() { return m_transform; }
         void LocalTransform( const Transform& localTransform );
 
     protected:
