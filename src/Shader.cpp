@@ -39,20 +39,14 @@ Shader& Shader::operator=( const Shader& other )
     return *this;
 }
 
-void Shader::LoadShader(std::filesystem::directory_entry path)
+void Shader::LoadShader(std::filesystem::path path)
 {
         if ( !exists(path) )
             return;
-        
-        std::string fileName = std::filesystem::path(path).filename();
-        std::string::size_type s = fileName.rfind("/");
-        if ( s != std::string::npos )
-        {
-            fileName.erase( fileName.begin(), fileName.begin() + s );
-        }
 
+        std::string fileName = path.filename().string();
         m_name = fileName;
-        s = m_name.find(".");
+        size_t s = m_name.find(".");
         if ( s != std::string::npos )
         {
             m_name.erase( m_name.begin() + s, m_name.end() );

@@ -1,0 +1,1 @@
+cmake -G "Visual Studio 17 2022" -S . -B build/ -DCMAKE_BUILD_TYPE=$1 -DCMAKE_EXPORT_COMPILE_COMMANDS=1

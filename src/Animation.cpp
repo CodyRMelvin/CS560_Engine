@@ -75,6 +75,7 @@ void Animation::Render()
                 break;
 
             default:
+                break;
         }
     });
 }

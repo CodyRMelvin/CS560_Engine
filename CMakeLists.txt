@@ -1,7 +1,13 @@
 cmake_minimum_required(VERSION 3.31)
 
-set( CMAKE_CXX_COMPILER clang++ )
-set( CMAKE_C_COMPILER clang )
+if (WIN32)
+    set( CMAKE_CXX_COMPILER clang-cl )
+    set( CMAKE_C_COMPILER clang-cl )
+endif()
+if (UNNIX)
+    set( CMAKE_CXX_COMPILER clang++ )
+    set( CMAKE_C_COMPILER clang )
+endif()
 
 project(CS560 LANGUAGES C CXX)
 

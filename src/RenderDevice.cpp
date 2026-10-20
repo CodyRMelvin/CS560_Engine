@@ -35,13 +35,7 @@ void RenderDevice::Initialize()
 
     std::filesystem::path dir = GetCWD();
     std::string pathStr = dir.string();
-    std::string::size_type size = pathStr.find("/bin");
-    if ( size != std::string::npos )
-    {
-        pathStr.erase( pathStr.begin() + size, pathStr.end() );
-    }
     pathStr += "/Assets";
-    glEnableVertexAttribArray(0);
     ShaderLibrary::CompileShaders( pathStr + "/shaders" );
 
     glEnable(GL_DEPTH_TEST);

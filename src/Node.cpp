@@ -7,7 +7,6 @@
 
 #include "Node.h"
 #include "Transform.h"
-#include <sys/socket.h>
 
 std::unordered_map< uint64_t, Node* > Node::NodeLibrary;
 

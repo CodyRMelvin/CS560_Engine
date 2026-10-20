@@ -33,7 +33,7 @@ class Shader
 
         Shader& operator=( const Shader& other );
 
-        void LoadShader(std::filesystem::directory_entry path);
+        void LoadShader(std::filesystem::path path);
         void LoadShader(std::string path);
         void Destroy();
 

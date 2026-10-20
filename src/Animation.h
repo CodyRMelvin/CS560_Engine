@@ -49,7 +49,7 @@ class Animation : public Node
         Animation() = default;
         Animation( uint64_t id, uint64_t parent );
         Animation( const Animation& other );
-        ~Animation() {}
+        ~Animation() = default;
 
         void Initialize();
         void Render();
