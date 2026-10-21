@@ -12,6 +12,7 @@
 #include "Common.h"
 #include "Node.h"
 #include "Pipeline.h"
+#include "Animation.h"
 
 #include <glad/glad.h>
 

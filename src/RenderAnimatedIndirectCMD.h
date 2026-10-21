@@ -24,7 +24,6 @@ class RenderAnimatedIndirectCMD: public ICommand
     public:
         uint64_t meshID;
         Pipeline pipeline;
-        Transform transform;
 
         RenderAnimatedIndirectCMD() = default;
         ~RenderAnimatedIndirectCMD() = default;
@@ -44,25 +43,25 @@ class RenderAnimatedIndirectCMD: public ICommand
             std::vector<glm::mat4> boneMats;
             boneMats.resize( skin.inverseBindMatrices.size() );
 
-            glm::mat4 inverseGlobal = glm::inverse( mesh->GlobalTransform().Matrix() );
+            glm::mat4 inverseGlobal = glm::inverse( mesh->GlobalTransformMatrix() );
             std::for_each( skin.joints.begin(), skin.joints.end(),
             [ &boneMats, &inverseGlobal, &skin ]( uint64_t boneID )
             {
                 Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[boneID] );
                 if (!j)
                     return;
-                boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransform().Matrix() * skin.inverseBindMatrices[j->matrixIndex];
+                boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
             }); 
 
             pipeline.Bind();
             pipeline.ActiveShader(Shader::shaderTypeVertex);
 
-            glm::mat4 modelView = Application::Get().GetActiveCamera().View() * transform.Matrix();
+            glm::mat4 modelView = Application::Get().GetActiveCamera().View() * mesh->LocalTransform().Matrix();
             pipeline.UniformMat( 0, modelView ); 
             pipeline.UniformMat( 1, Application::Get().GetActiveCamera().Perspective() );
             glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
             pipeline.UniformMat( 2, normalMatrix );
-            pipeline.UniformMat( 3, skin.inverseBindMatrices.data(), skin.inverseBindMatrices.size() );
+            pipeline.UniformMat( 3, boneMats.data(), boneMats.size() );
 
             mesh->DrawPrimitives();
 

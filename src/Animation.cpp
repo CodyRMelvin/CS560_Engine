@@ -10,14 +10,14 @@
 #include "Common.h"
 #include "Application.h"
 
+std::vector<Animation> Animation::AnimationLibrary;
+
 Animation::Animation( uint64_t id, uint64_t parent )
-    : Node( id, parent )
-    , m_channels()
+    : m_channels()
 { }
 
 Animation::Animation( const Animation& other )
-    : Node(other)
-    , m_channels( other.m_channels.begin(), other.m_channels.end() )
+    : m_channels( other.m_channels.begin(), other.m_channels.end() )
 { }
 
 void Animation::Initialize()
@@ -34,10 +34,11 @@ void Animation::Initialize()
     });
 }
 
-void Animation::Render()
+void Animation::Animate()
 {
+    //return;
     float dt = Application::Get().GetDeltaTime();
-    dt = .5;
+    dt = .001;
 
     std::for_each( m_channels.begin(), m_channels.end(), 
     [dt]( Channel& channel )
@@ -79,9 +80,6 @@ void Animation::Render()
         }
     });
 }
-
-void Animation::Destroy()
-{ }
 
 Animation::Channel Animation::GetChannel( size_t index ) const
 {

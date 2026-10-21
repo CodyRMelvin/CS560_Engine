@@ -7,6 +7,7 @@
 
 #include "RenderDevice.h"
 #include "ShaderLibrary.h"
+#include "Animation.h"
 #ifdef _DEBUG
 #include "Debug.h"
 #endif

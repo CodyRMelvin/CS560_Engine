@@ -77,6 +77,12 @@ void Application::Initialize()
     }
 
     m_previous = std::chrono::steady_clock::now();
+
+    std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
+    []( Animation& anim )
+    {
+        anim.Initialize();
+    });
 }
 
 void Application::Run()
@@ -88,6 +94,12 @@ void Application::Run()
     {
         m_now = std::chrono::steady_clock::now();
         m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>( m_now - m_previous ).count() / 1000.f;
+
+        std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
+        []( Animation& anim )
+        {
+            anim.Animate();
+        });
 
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )

@@ -276,6 +276,8 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         j->LocalTransform( std::get<fastgltf::TRS>(node.transform) );
         j->m_children.insert( j->m_children.begin(), node.children.begin(), node.children.end() );
 
+        if ( s.joints[i] == 29 )
+            Logger::TestLog();
         Node::NodeLibrary[ s.joints[i] ] = j;
     }
 
@@ -284,6 +286,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
 
 [[nodiscard]] std::expected< Animation, Error > Parser::ReadAnimation( const fastgltf::Animation& animation ) const
 {
+    int counter = 0;
     Animation anim;
     for ( const fastgltf::AnimationChannel& channel : animation.channels )
     {
@@ -335,7 +338,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
             default: break;
         }
 
-        anim.AddChannel(c); 
+        anim.AddChannel(c);
     }
 
     return anim;
@@ -416,9 +419,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
             continue;
         }
 
-        Animation* newAnim = new Animation( expectAnim.value() );
-        newAnim->m_ID = Node::NodeLibrary.size();
-        Node::NodeLibrary[newAnim->m_ID] = newAnim;
+        Animation::AnimationLibrary.push_back( expectAnim.value() );
     }
 
     // For each node, assign its children the index of its parent

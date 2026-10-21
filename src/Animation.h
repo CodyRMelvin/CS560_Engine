@@ -9,11 +9,13 @@
 #ifndef ANIMATION_H
 #define ANIMATION_H
 
-#include "Node.h"
+#include "Common.h"
 
-class Animation : public Node
+class Animation
 {
     public:
+        static std::vector<Animation> AnimationLibrary;
+
         enum Path : int
         {
             pathInvalid = -1,
@@ -52,8 +54,7 @@ class Animation : public Node
         ~Animation() = default;
 
         void Initialize();
-        void Render();
-        void Destroy();
+        void Animate();
 
         Channel GetChannel( size_t index ) const;
         void AddChannel( const Channel& channel );
