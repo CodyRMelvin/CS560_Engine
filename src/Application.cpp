@@ -22,6 +22,8 @@
 #include <stdexcept>
 #include <typeinfo>
 
+bool animate = true;
+
 Application::Application()
     : m_window()
     , m_activeCamera() 
@@ -31,22 +33,9 @@ Application::Application()
 Application::~Application()
 { };
 
-void Application::Initialize()
+void Application::SetUpScene( std::string assetDir )
 {
-    Logger::Initialize(Logger::severityInfo);
-    Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
-
-    m_window.Initialize();
-    RenderDevice::Get().Initialize();
-    RenderDevice::Get().config = 
-    { 
-        .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, 
-        .clearColor = { 0, 0, 1, 1 },
-        .renderSkeleton = true,
-        .renderMesh = false,
-    };
-    
-    std::filesystem::path dir( GetCWD().string() + "/Assets/glTF/roman_D_out/roman_D.gltf" );   
+    std::filesystem::path dir( GetCWD().string() + assetDir );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
     if (!parser)
     {
@@ -82,13 +71,30 @@ void Application::Initialize()
                       .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
     }
 
-    m_previous = std::chrono::steady_clock::now();
-
     std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
     []( Animation& anim )
     {
         anim.Initialize();
     });
+}
+
+void Application::Initialize()
+{
+    Logger::Initialize(Logger::severityInfo);
+    Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
+
+    m_window.Initialize();
+    RenderDevice::Get().Initialize();
+    RenderDevice::Get().config = 
+    { 
+        .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, 
+        .clearColor = { .3, .2, 1, 1 },
+        .renderSkeleton = true,
+        .renderMesh = true,
+    };
+
+    SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");
+    m_previous = std::chrono::steady_clock::now();
 }
 
 void Application::Run()
@@ -98,14 +104,18 @@ void Application::Run()
 
     while (!m_shouldQuit)
     {
+        m_previous = m_now;
         m_now = std::chrono::steady_clock::now();
         m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>( m_now - m_previous ).count() / 1000.f;
 
-        std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
-        []( Animation& anim )
+        if (animate)
         {
-            anim.Animate();
-        });
+            std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
+            []( Animation& anim )
+            {
+                anim.Animate();
+            });
+        }
 
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )
@@ -143,6 +153,27 @@ void Application::Run()
                         m_activeCamera.Rotate( { 0, 1, 0 }, .05 );
                     if (e.key.key == SDLK_RIGHT)
                         m_activeCamera.Rotate( { 0, 1, 0 }, -.05 );
+
+                    // Press tab to toggle rendering the mesh
+                    if ( e.key.key == SDLK_TAB )
+                        RenderDevice::Get().config.renderMesh ^= true;
+                    // Press left ctrl to toggle rendering the skeleton
+                    if ( e.key.key == SDLK_LCTRL )
+                        RenderDevice::Get().config.renderSkeleton ^= true;
+                    // Press space to toggle animation
+                    if ( e.key.key == SDLK_SPACE )
+                        animate = !animate;
+
+                    if ( e.key.key == SDLK_1 )
+                    {
+                        DeleteAllNodes();
+                        SetUpScene("/Assets/glTF/viking_C_out/viking_C.gltf");                    
+                    }
+                    if ( e.key.key == SDLK_2 )
+                    {
+                        DeleteAllNodes();
+                        SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");   
+                    }
 
                     if ( e.key.key == SDLK_Q )
                     {

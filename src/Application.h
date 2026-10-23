@@ -36,6 +36,7 @@ class Application
         float m_deltaTime;
 
         Application();
+        void SetUpScene( std::string assetDir );
 };
 
 #endif
