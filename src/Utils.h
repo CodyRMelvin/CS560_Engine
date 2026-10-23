@@ -63,11 +63,7 @@ class Error
 
 inline std::filesystem::path GetCWD()
 {
-#ifdef WIN32
-    static std::filesystem::path dir = std::filesystem::current_path().parent_path().parent_path();
-#else
     static std::filesystem::path dir = std::filesystem::current_path();
-#endif
     return dir; 
 }
 

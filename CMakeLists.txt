@@ -15,11 +15,13 @@ add_subdirectory(src)
 add_subdirectory(dependencies)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin/)
+set_target_properties( ${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/../bin/ )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE "$<$<CONFIG:Debug>:_DEBUG>")
 
 if(WIN32)
     target_compile_definitions( ${PROJECT_NAME} PRIVATE "WIN32" )
+    set_property( TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}" )
 endif()
 if(UNIX)
     target_compile_definitions( ${PROJECT_NAME} PRIVATE "UNIX" )
@@ -38,6 +40,7 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG" )
 target_include_directories( ${PROJECT_NAME} PRIVATE dependencies )
 target_link_libraries( ${PROJECT_NAME} PRIVATE dependencies )
 
+
 add_custom_target(
     run
     COMMAND ${PROJECT_NAME}
@@ -45,3 +48,4 @@ add_custom_target(
     DEPENDS ${PROJECT_NAME}
     USES_TERMINAL
 )
+

@@ -19,8 +19,6 @@
 #include "fastgltf/tools.hpp"
 
 #include <expected>
-#include <regex>
-#include <xcb/xproto.h>
 
 fastgltf::Parser Parser::m_parser;
 
