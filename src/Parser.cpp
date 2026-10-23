@@ -395,7 +395,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
                 {
                     Joint* j = static_cast<Joint*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
-                    vertices[i].pos = j->GlobalTransform().Translation();
+                    vertices[i].pos = j->GlobalTransformMatrix()[3];
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
                     vertices[i].tex = glm::vec2(0);
                     vertices[i].boneIds = glm::ivec4( 0, 0, 0, 0 );

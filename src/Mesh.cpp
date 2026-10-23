@@ -92,7 +92,7 @@ void Mesh::Render()
     {
         RenderIndirectCMD* cmd = new RenderIndirectCMD();
         cmd->mesh = m_ID;
-        cmd->transform = GlobalTransform();
+        cmd->transform = GlobalTransformMatrix();
         cmd->pipeline = m_pipeline;
 
         RenderDevice::Get().Push(cmd); 

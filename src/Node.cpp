@@ -76,7 +76,7 @@ Node3D::Node3D( const Node3D& other )
     : Node(other)
     , m_transform(other.m_transform)
 { }
-
+/*
 Transform Node3D::GlobalTransform() const
 {
     if ( m_ID == m_parent )
@@ -89,14 +89,48 @@ Transform Node3D::GlobalTransform() const
     Transform pt = parent->GlobalTransform();
     Transform lt = m_transform;
     Transform global;
-    global.Translation( lt.Translation() + pt.Translation() );
+    global.Translation( GlobalTransformMatrix()[3] );
     global.Rotation( lt.Rotation() * pt.Rotation() );
     global.Scale( lt.Scale() * pt.Scale() );
 
     return global;
 }
+*/
 
-glm::mat4 Node3D::GlobalTransformMatrix() 
+glm::mat4 Node3D::GlobalTransformMatrix() const
+{
+    if (m_ID == m_parent)
+        return m_transform.Matrix();
+
+    Node3D* parent = dynamic_cast<Node3D*>(NodeLibrary[m_parent]);
+    if (!parent)
+        return m_transform.Matrix();
+
+    glm::mat4 result = m_transform.Matrix() * parent->GlobalTransformMatrix();
+    return result;
+}
+/*
+Transform Node3D::GlobalTransform()
+{
+    if ( m_ID == m_parent )
+        return m_transform;
+
+    Node3D* parent =  dynamic_cast<Node3D*>( NodeLibrary[m_parent] );
+    if (!parent)
+        return m_transform;
+
+    Transform pt = parent->GlobalTransform();
+    Transform lt = m_transform;
+    Transform global;
+    global.Translation( GlobalTransformMatrix()[3] );
+    global.Rotation( lt.Rotation() * pt.Rotation() );
+    global.Scale( lt.Scale() * pt.Scale() );
+
+    return global;
+}
+*/
+
+glm::mat4 Node3D::GlobalTransformMatrix()
 {
     if (m_ID == m_parent)
         return m_transform.Matrix();

@@ -57,10 +57,12 @@ void Camera::operator=(const Camera& other)
 
 void Camera::Initialize() 
 {
+    /*
     Transform t = GlobalTransform();
     glm::vec3 up = t.Rotation().Rotate( { 0, 1, 0 } );
     glm::vec3 lookat = t.Rotation().Rotate( { 0, 0, -1 } );
     LookAt( t.Translation(), lookat, up );
+    */
 }
 
 Camera& Camera::SetViewingDimensions( float fov, float aspectRatio )

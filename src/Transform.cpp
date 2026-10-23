@@ -76,3 +76,12 @@ glm::mat4 Transform::Matrix()
     return m_matrix;
 }
 
+glm::mat4 Transform::Matrix() const
+{
+    if (!m_isDirty)
+        return m_matrix;
+
+    return glm::translate( glm::mat4(1), m_translation ) * 
+           m_rotation.RotationMatrix() * glm::scale( glm::mat4(1), m_scale );
+
+}

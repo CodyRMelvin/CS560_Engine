@@ -69,7 +69,7 @@ class Transform
          }
 
         glm::mat4 Matrix();
-        inline glm::mat4 Matrix() const { return m_matrix; }
+        glm::mat4 Matrix() const; 
 
     private:
         glm::vec3 m_scale;

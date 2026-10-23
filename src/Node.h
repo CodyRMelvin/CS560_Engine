@@ -62,7 +62,9 @@ class Node3D : public Node
         virtual void Render() = 0;
         virtual void Destroy() = 0;
 
-        Transform GlobalTransform() const;
+        //Transform GlobalTransform() const;
+        glm::mat4 GlobalTransformMatrix() const;
+        //Transform GlobalTransform();
         glm::mat4 GlobalTransformMatrix();
         Transform LocalTransform() const;
         Transform& LocalTransform() { return m_transform; }
