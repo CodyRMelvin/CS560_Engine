@@ -6,9 +6,10 @@
 //**************************************************************************************************
 
 #pragma once
-#ifndef STUB_H
-#define STUB_H
+#ifndef RENDERANIMATIONBONES_H
+#define RENDERANIMATIONBONES_H
 
+#include "Common.h"
 #include "RenderDevice.h"
 #include "Pipeline.h"
 #include "Transform.h"
@@ -16,30 +17,38 @@
 #include "Joint.h"
 #include "Application.h"
 
-#include "glm/glm.hpp"
-
 class RenderAnimationBonesCMD : ICommand
 {
 public:
     Pipeline pipeline;
     Transform globalTransform;
-    Mesh::Skin skin;
+    uint64_t meshIndex;
 
     RenderAnimationBonesCMD() = default;
     ~RenderAnimationBonesCMD() = default;
+
     void Execute()
     {
+        Mesh* mesh = static_cast<Mesh*>( Node::NodeLibrary[meshIndex] );
+        if ( !mesh->HasSkin() )
+        {
+            Logger::LogLine( Logger::severityWarning, "Mesh {} passed into RenderAnimationBonesCMD has no skin", meshIndex );
+            return;
+        }
+
+        Mesh::Skin skin = mesh->GetSkin();
+
         std::vector<glm::mat4> boneMats;
         boneMats.resize(skin.inverseBindMatrices.size());
 
         glm::mat4 inverseGlobal = glm::inverse( globalTransform.Matrix() );
         std::for_each(skin.joints.begin(), skin.joints.end(),
-        [ &boneMats, &inverseGlobal, this ](uint64_t boneID)
+        [ &boneMats, &inverseGlobal, &skin ](uint64_t boneID)
         {
             Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[boneID] );
             if (!j)
                 return;
-            boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransformMatrix() * this->skin.inverseBindMatrices[j->matrixIndex];
+            boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
         });
 
         pipeline.Bind();

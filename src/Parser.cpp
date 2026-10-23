@@ -20,6 +20,7 @@
 
 #include <expected>
 #include <regex>
+#include <xcb/xproto.h>
 
 fastgltf::Parser Parser::m_parser;
 
@@ -225,8 +226,6 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         m.EnableIndexBuffer(index); 
     }
 
-    m.InitializeDrawBuffer();
-
     return m;
 }
 
@@ -268,17 +267,27 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
     else
         s.skeleton = s.joints[0];
 
-    for ( int i = 0; i < s.joints.size(); ++i )
+    const auto& AddJoints = 
+    [ &s, this ]( this const auto& self, size_t index, size_t parent ) -> void
     {
-        fastgltf::Node node = m_asset.nodes[ s.joints[i] ];
-        Joint* j = new Joint( s.joints[i], s.joints[i] );
-        j->matrixIndex = i;
+        fastgltf::Node node = m_asset.nodes[index];
+        Joint* j = new Joint( index, parent );
         j->LocalTransform( std::get<fastgltf::TRS>(node.transform) );
         j->m_children.insert( j->m_children.begin(), node.children.begin(), node.children.end() );
 
-        if ( s.joints[i] == 29 )
-            Logger::TestLog();
-        Node::NodeLibrary[ s.joints[i] ] = j;
+        Node::NodeLibrary[index] = j;
+        for ( const size_t idx : j->m_children )
+            self( idx, index );
+    };
+
+    AddJoints( s.skeleton, s.skeleton );
+
+    for ( int i = 0; i < s.joints.size(); ++i )
+    {
+        Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[ s.joints[i] ] );
+        if (!j)
+            continue;
+        j->matrixIndex = i;
     }
 
     return s;
@@ -375,6 +384,46 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 }
 
                 expectMesh.value().SetSkin( expectSkin.value() );
+
+                Mesh& m = expectMesh.value();
+                std::vector<size_t> indexBuffer;
+                size_t pIndex = m.GetAnimationPrimitive();
+
+                m.InitializeVertexArray( pIndex, GL_LINES );
+                m.InitializeVertexBuffer( pIndex, expectSkin.value().joints.size(), sizeof(Vertex) ); 
+                Vertex* vertices = static_cast<Vertex*>( m.MapVertexBuffer( pIndex, GL_WRITE_ONLY ) );
+                for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
+                {
+                    Joint* j = static_cast<Joint*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
+                    vertices[i].pos = j->GlobalTransform().Translation();
+                    vertices[i].nrm = glm::vec3( 1, 0, 0 );
+                    vertices[i].tex = glm::vec2(0);
+                    vertices[i].boneIds = glm::ivec4( 0, 0, 0, 0 );
+                    vertices[i].weights = glm::vec4( 1, 0, 0, 0 );
+
+                    for ( const size_t child : j->m_children )
+                    {
+                        auto childIt = std::find( expectSkin.value().joints.begin(), expectSkin.value().joints.end(), child );
+                        if ( childIt == expectSkin.value().joints.end() )
+                            continue;
+
+                        indexBuffer.push_back(i);
+                        indexBuffer.push_back( std::distance( expectSkin.value().joints.begin(), childIt ) );
+                    }
+                }
+                m.UnMapVertexBuffer(pIndex);
+                m.EnableVertexAttribute( pIndex, 0, 3, GL_FLOAT, offsetof( Vertex, pos ) ); 
+                m.EnableVertexAttribute( pIndex, 1, 3, GL_FLOAT, offsetof( Vertex, nrm ) ); 
+                m.EnableVertexAttribute( pIndex, 2, 2, GL_FLOAT, offsetof( Vertex, tex ) ); 
+                m.EnableVertexAttributeI( pIndex, 3, 4, GL_UNSIGNED_INT, offsetof( Vertex, boneIds ) ); 
+                m.EnableVertexAttribute( pIndex, 4, 4, GL_FLOAT, offsetof( Vertex, weights ) ); 
+
+                m.InitializeIndexBuffer( pIndex, indexBuffer.size(), GL_UNSIGNED_INT );
+                uint32_t* indices = static_cast<uint32_t*>( m.MapIndexBuffer( pIndex, GL_WRITE_ONLY ) );
+                std::copy( indexBuffer.data(), indexBuffer.data() + indexBuffer.size(), indices );
+                m.UnMapIndexBuffer(pIndex);
+                m.EnableIndexBuffer(pIndex);
+                expectMesh.value() = m;
             }
 
             newNode = new Mesh( expectMesh.value() );

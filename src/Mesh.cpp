@@ -18,6 +18,7 @@ Mesh::Mesh( uint32_t id, uint32_t parent )
     , m_primitives()
     , m_drawBuffer()
     , m_skin()
+    , m_animationPrimitiveIndex()
 { }
 
 Mesh::Mesh( const Mesh& other )
@@ -25,6 +26,7 @@ Mesh::Mesh( const Mesh& other )
     , m_primitives(other.m_primitives) 
     , m_drawBuffer(other.m_drawBuffer)
     , m_skin(other.m_skin)
+    , m_animationPrimitiveIndex(other.m_animationPrimitiveIndex)
 { }
 
 Mesh& Mesh::operator=( const Mesh& other )
@@ -34,14 +36,16 @@ Mesh& Mesh::operator=( const Mesh& other )
 
     *static_cast<Node3D*>(this) = other;
 
-    this->m_drawBuffer = other.m_drawBuffer;
-    this->m_primitives = std::vector<Primitive>(other.m_primitives);
-    this->m_skin = other.m_skin;
+    m_drawBuffer = other.m_drawBuffer;
+    m_primitives = std::vector<Primitive>(other.m_primitives);
+    m_skin = other.m_skin;
+    m_animationPrimitiveIndex = other.m_animationPrimitiveIndex;
     return *this;
 }
 
 void Mesh::Initialize()
 {
+    InitializeDrawBuffer();
     m_pipeline.Initialize();
     m_pipeline.Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeVertex ) )
               .Shader( ShaderLibrary::GetShader( "FlatShade", Shader::shaderTypeFragment ) );
@@ -81,7 +85,6 @@ void Mesh::Render()
 
         RenderAnimatedIndirectCMD* cmd = new RenderAnimatedIndirectCMD();
         cmd->meshID = m_ID;
-        cmd->transform = m_transform;
         cmd->pipeline = p;
         RenderDevice::Get().Push(cmd);
     }
@@ -89,7 +92,7 @@ void Mesh::Render()
     {
         RenderIndirectCMD* cmd = new RenderIndirectCMD();
         cmd->mesh = m_ID;
-        cmd->transform = m_transform;
+        cmd->transform = GlobalTransform();
         cmd->pipeline = m_pipeline;
 
         RenderDevice::Get().Push(cmd); 
@@ -177,6 +180,16 @@ void Mesh::InitializeDrawBuffer()
 {
     glCreateBuffers( 1, &m_drawBuffer );
     glNamedBufferData( m_drawBuffer, m_primitives.size() * sizeof(Primitive), m_primitives.data(), GL_STATIC_DRAW );
+}
+
+size_t Mesh::GetAnimationPrimitive()
+{
+    if ( m_animationPrimitiveIndex.has_value() ) 
+        return m_animationPrimitiveIndex.value();
+
+    m_animationPrimitiveIndex = m_primitives.size();
+    m_primitives.emplace_back( Primitive{ IndirectDrawCommand{0}, 0 } );
+    return m_animationPrimitiveIndex.value();
 }
 
 void Mesh::Destroy( size_t index )
@@ -315,12 +328,60 @@ void Mesh::EnableIndexBuffer( size_t index )
 
 void Mesh::DrawPrimitives() const
 {
-    glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
-    for ( int i = 0; i < m_primitives.size(); ++i )
+    RenderDeviceSettings config = RenderDevice::Get().config;
+
+    if ( !config.renderMesh && !config.renderSkeleton )
+        return;
+
+    if ( !m_animationPrimitiveIndex.has_value() && !config.renderMesh )
+        return;
+
+    // If there is a primitive for drawing the skeleton, perform the draw operation while checking against the index and
+    // RenderDevice config to see if the current primitive should be drawn
+    m_animationPrimitiveIndex.and_then(
+    [ config, this ]( const size_t idx ) -> std::optional<size_t>
     {
-        const Primitive& p = m_primitives[i];
-        glBindVertexArray(p.VAO);
-        glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( i * sizeof(Primitive) ) );
-        glBindVertexArray(0);
+        if (!config.renderMesh)
+        {
+            glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+            DrawPrimitive(idx);
+            return idx;
+        }
+
+        glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+        for ( int i = 0; i < m_primitives.size(); ++i )
+        {
+            if ( idx == i )
+            {
+                if ( !config.renderSkeleton )
+                    continue;
+            }
+            DrawPrimitive(i);
+        }
+
+        return idx;
+    })
+    .or_else(
+    [this]() -> std::optional<size_t>
+    {
+        glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+        for ( int i = 0; i < m_primitives.size(); ++i )
+            DrawPrimitive(i);
+
+        return false;
+    });
+}
+
+void Mesh::DrawPrimitive( size_t index ) const
+{
+    if ( m_primitives.size() <= index )
+    {
+        Logger::LogLine( Logger::severityError, "Primitive at index {} does not exist", index );
+        return;
     }
+
+    const Primitive& p = m_primitives[index];
+    glBindVertexArray(p.VAO);
+    glDrawElementsIndirect( p.primType, p.indexType, reinterpret_cast<const void*>( index * sizeof(Primitive) ) );
+    glBindVertexArray(0);
 }

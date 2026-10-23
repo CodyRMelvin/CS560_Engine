@@ -90,8 +90,8 @@ Transform Node3D::GlobalTransform() const
     Transform lt = m_transform;
     Transform global;
     global.Translation( lt.Translation() + pt.Translation() );
-    global.Rotation( pt.Rotation() * lt.Rotation() );
-    global.Scale( lt.Scale() + pt.Scale() );
+    global.Rotation( lt.Rotation() * pt.Rotation() );
+    global.Scale( lt.Scale() * pt.Scale() );
 
     return global;
 }

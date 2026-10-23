@@ -38,7 +38,13 @@ void Application::Initialize()
 
     m_window.Initialize();
     RenderDevice::Get().Initialize();
-    RenderDevice::Get().config = { .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, .clearColor = { 0, 0, 1, 1 } };
+    RenderDevice::Get().config = 
+    { 
+        .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, 
+        .clearColor = { 0, 0, 1, 1 },
+        .renderSkeleton = true,
+        .renderMesh = false,
+    };
     
     std::filesystem::path dir( GetCWD().string() + "/Assets/glTF/roman_D_out/roman_D.gltf" );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers );

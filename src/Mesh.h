@@ -51,21 +51,24 @@ class Mesh : public Node3D
         virtual void Render() override;
         virtual void Destroy() override;
 
-        virtual void InitializeVertexArray( size_t index, GLenum primitiveType );
-        virtual void InitializeVertexBuffer( size_t index, size_t count, size_t vertexSize = sizeof(Vertex)  );
-        virtual void InitializeIndexBuffer( size_t index, size_t count, GLenum indexType );
-        virtual void InitializeDrawBuffer();
-        virtual void Destroy( size_t index );
+        void InitializeVertexArray( size_t index, GLenum primitiveType );
+        void InitializeVertexBuffer( size_t index, size_t count, size_t vertexSize = sizeof(Vertex)  );
+        void InitializeIndexBuffer( size_t index, size_t count, GLenum indexType );
+        void InitializeDrawBuffer();
+        size_t GetAnimationPrimitive();
+        void Destroy( size_t index );
 
-        virtual void* MapVertexBuffer( size_t index, GLenum access );
-        virtual void* MapIndexBuffer( size_t index, GLenum access );
-        virtual void UnMapVertexBuffer( size_t index );
-        virtual void UnMapIndexBuffer( size_t index );
-        virtual void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
-        virtual void EnableVertexAttributeI( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
-        virtual void EnableIndexBuffer( size_t index );
+        void* MapVertexBuffer( size_t index, GLenum access );
+        void* MapIndexBuffer( size_t index, GLenum access );
+        void UnMapVertexBuffer( size_t index );
+        void UnMapIndexBuffer( size_t index );
+        void EnableVertexAttribute( size_t primINdex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
+        void EnableVertexAttributeI( size_t primIndex, GLuint attribIndex, GLint size, GLenum type, GLuint offset, size_t vertexSize = sizeof(Vertex) );
+        void EnableIndexBuffer( size_t index );
 
-        virtual void DrawPrimitives() const;
+        void DrawPrimitives() const;
+        void DrawAnimationPrimitive() const;
+        void DrawPrimitive( size_t index ) const;
 
         bool HasSkin() const { return m_skin.has_value(); }
         Skin GetSkin() const { return m_skin.value(); }
@@ -93,6 +96,7 @@ class Mesh : public Node3D
 
         std::vector<Primitive> m_primitives;
         std::optional<Skin> m_skin;
+        std::optional<size_t> m_animationPrimitiveIndex;
 };
 
 #endif

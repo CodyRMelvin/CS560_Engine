@@ -23,8 +23,10 @@ class ICommand
 
 struct RenderDeviceSettings
 {
-    GLbitfield clearOptions;
-    glm::vec4 clearColor;
+    GLbitfield clearOptions = 0;
+    glm::vec4 clearColor = glm::vec4{0};
+    bool renderSkeleton = false;
+    bool renderMesh = true;
 };
 
 class RenderDevice

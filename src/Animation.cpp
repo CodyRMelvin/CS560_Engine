@@ -38,7 +38,7 @@ void Animation::Animate()
 {
     //return;
     float dt = Application::Get().GetDeltaTime();
-    dt = .001;
+    dt = .01;
 
     std::for_each( m_channels.begin(), m_channels.end(), 
     [dt]( Channel& channel )
