@@ -22,8 +22,8 @@ typedef class Animation Animation;
 class Parser
 {
     public:
-        Parser( std::string path, fastgltf::Options options );
-        Parser( std::filesystem::path path, fastgltf::Options options  );
+        Parser( std::string path, fastgltf::Options options, fastgltf::Extensions extensions = fastgltf::Extensions::None );
+        Parser( std::filesystem::path path, fastgltf::Options options, fastgltf::Extensions extensions = fastgltf::Extensions::None );
         Parser( Parser& ) = delete;
         ~Parser() = default;
 
@@ -36,8 +36,7 @@ class Parser
         operator bool() const { return m_opened; }
 
     private:
-        static fastgltf::Parser m_parser;
-
+        fastgltf::Parser m_parser;
         std::filesystem::path m_filePath;
         fastgltf::Asset m_asset;
         fastgltf::GltfDataBuffer m_buffer;

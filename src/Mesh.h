@@ -74,6 +74,9 @@ class Mesh : public Node3D
         Skin GetSkin() const { return m_skin.value(); }
         void SetSkin( const Skin& skin ) { m_skin = skin; }
 
+        bool HasAnimationPrimitive() const { return m_animationPrimitiveIndex.has_value(); }
+        bool GetAnimationPrimitive() const { return m_animationPrimitiveIndex.value(); }
+
     protected:
         struct IndirectDrawCommand
         {

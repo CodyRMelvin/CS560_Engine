@@ -7,6 +7,7 @@
 
 #include "Mesh.h"
 #include "RenderAnimatedIndirectCMD.h"
+#include "RenderAnimationBonesCMD.h"
 #include "ShaderLibrary.h"
 #include "RenderDevice.h"
 #include "RenderIndirectCMD.h"  
@@ -73,7 +74,8 @@ void Mesh::Render()
 {
     if ( m_skin.has_value() )
     {
-        // Temporary implementation 
+        // Temporary implementation
+        // TODO: implement pipeline library
         static Pipeline p;
         if ( p.GLPipeline() == 0 ) 
         {
@@ -93,6 +95,16 @@ void Mesh::Render()
         RenderIndirectCMD* cmd = new RenderIndirectCMD();
         cmd->mesh = m_ID;
         cmd->transform = GlobalTransformMatrix();
+        cmd->pipeline = m_pipeline;
+
+        RenderDevice::Get().Push(cmd); 
+    }
+    if ( RenderDevice::Get().config.renderSkeleton && m_skin.has_value() )
+    {
+        RenderAnimationBonesCMD* cmd = new RenderAnimationBonesCMD();
+        cmd->meshIndex = m_ID;
+        cmd->transform = GlobalTransformMatrix();
+        //cmd->transform = glm::mat4{1};
         cmd->pipeline = m_pipeline;
 
         RenderDevice::Get().Push(cmd); 
@@ -328,37 +340,22 @@ void Mesh::EnableIndexBuffer( size_t index )
 
 void Mesh::DrawPrimitives() const
 {
-    RenderDeviceSettings config = RenderDevice::Get().config;
-
-    if ( !config.renderMesh && !config.renderSkeleton )
+    if (!RenderDevice::Get().config.renderMesh)
         return;
 
-    if ( !m_animationPrimitiveIndex.has_value() && !config.renderMesh )
-        return;
-
-    // If there is a primitive for drawing the skeleton, perform the draw operation while checking against the index and
-    // RenderDevice config to see if the current primitive should be drawn
+    // If there is a primitive for drawing the skeleton, perform the draw operation while checking against the index 
+    // to ensure the skeleton primitive isn't drawn here.
     m_animationPrimitiveIndex.and_then(
-    [ config, this ]( const size_t idx ) -> std::optional<size_t>
+    [this]( const size_t idx ) -> std::optional<size_t>
     {
-        if (!config.renderMesh)
-        {
-            glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
-            DrawPrimitive(idx);
-            return idx;
-        }
-
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
         {
             if ( idx == i )
-            {
-                if ( !config.renderSkeleton )
-                    continue;
-            }
+                continue;
+
             DrawPrimitive(i);
         }
-
         return idx;
     })
     .or_else(
@@ -368,6 +365,27 @@ void Mesh::DrawPrimitives() const
         for ( int i = 0; i < m_primitives.size(); ++i )
             DrawPrimitive(i);
 
+        return false;
+    });
+}
+
+void Mesh::DrawAnimationPrimitive() const
+{
+    if (!RenderDevice::Get().config.renderSkeleton)
+        return;
+
+    // Draw the skeleton primitive is there is a supplied index
+    m_animationPrimitiveIndex.and_then(
+    [this]( const size_t idx ) -> std::optional<size_t>
+    {
+        glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
+        DrawPrimitive(idx);
+        return idx;
+    })
+    .or_else(
+    [this]() -> std::optional<size_t>
+    { 
+        Logger::LogLine( Logger::severityWarning, "Mesh {} does not have a skeleton primitive index", m_ID ); 
         return false;
     });
 }

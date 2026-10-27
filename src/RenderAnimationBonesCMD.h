@@ -12,16 +12,15 @@
 #include "Common.h"
 #include "RenderDevice.h"
 #include "Pipeline.h"
-#include "Transform.h"
 #include "Mesh.h"
-#include "Joint.h"
 #include "Application.h"
+#include "Joint.h"
 
-class RenderAnimationBonesCMD : ICommand
+class RenderAnimationBonesCMD : public ICommand
 {
 public:
     Pipeline pipeline;
-    Transform globalTransform;
+    glm::mat4 transform;
     uint64_t meshIndex;
 
     RenderAnimationBonesCMD() = default;
@@ -29,37 +28,28 @@ public:
 
     void Execute()
     {
-        Mesh* mesh = static_cast<Mesh*>( Node::NodeLibrary[meshIndex] );
-        if ( !mesh->HasSkin() )
-        {
-            Logger::LogLine( Logger::severityWarning, "Mesh {} passed into RenderAnimationBonesCMD has no skin", meshIndex );
-            return;
-        }
-
-        Mesh::Skin skin = mesh->GetSkin();
-
-        std::vector<glm::mat4> boneMats;
-        boneMats.resize(skin.inverseBindMatrices.size());
-
-        glm::mat4 inverseGlobal = glm::inverse( globalTransform.Matrix() );
-        std::for_each(skin.joints.begin(), skin.joints.end(),
-        [ &boneMats, &inverseGlobal, &skin ](uint64_t boneID)
-        {
-            Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[boneID] );
-            if (!j)
-                return;
-            boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
-        });
-
         pipeline.Bind();
         pipeline.ActiveShader(Shader::shaderTypeVertex);
 
-        glm::mat4 modelView = Application::Get().GetActiveCamera().View() * globalTransform.Matrix();
-        pipeline.UniformMat(0, modelView);
-        pipeline.UniformMat(1, Application::Get().GetActiveCamera().Perspective());
-        glm::mat4 normalMatrix = glm::transpose(glm::inverse(modelView));
-        pipeline.UniformMat(2, normalMatrix);
-        pipeline.UniformMat(3, boneMats.data(), boneMats.size());
+        glm::mat4 modelView = Application::Get().GetActiveCamera().View() * transform;
+        pipeline.UniformMat( 0, modelView ); 
+        pipeline.UniformMat( 1, Application::Get().GetActiveCamera().Perspective() );
+        glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
+        pipeline.UniformMat( 2, normalMatrix );
+
+        Mesh* m = static_cast<Mesh*>( Node::NodeLibrary[meshIndex] );
+        m->DrawAnimationPrimitive();
+
+        // Rewriting the position values of the skeleton to reflect the cpu side bones
+        // Absolutely not how I should be using indirect rendering but I'm in too deep now
+            // Possibly implement a dynamic, direct mesh class to handle this correctly down the line
+        Vertex* vertices = static_cast<Vertex*>( m->MapVertexBuffer( m->GetAnimationPrimitive(), GL_WRITE_ONLY ) );
+        for ( int i = 0; i < m->GetSkin().joints.size(); ++i )
+        {
+            vertices[i].pos = static_cast<Joint*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->GlobalTransformMatrix()[3];
+            //vertices[i].pos = static_cast<Joint*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->LocalTransform().Matrix()[3];
+        }
+        m->UnMapVertexBuffer( m->GetAnimationPrimitive() );
 
         pipeline.UnBind();
     }

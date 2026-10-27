@@ -15,6 +15,7 @@
 #include "Pipeline.h"
 #include "Node.h"
 
+#include "fastgltf/core.hpp"
 #include "glad/glad.h"
 #include "SDL3/SDL_events.h"
 
@@ -22,7 +23,7 @@
 #include <stdexcept>
 #include <typeinfo>
 
-bool animate = true;
+bool animate = false;
 
 Application::Application()
     : m_window()
@@ -90,10 +91,12 @@ void Application::Initialize()
         .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, 
         .clearColor = { .3, .2, 1, 1 },
         .renderSkeleton = true,
-        .renderMesh = true,
+        .renderMesh = false,
     };
 
-    SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");
+    //SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");
+    SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
+    //SetUpScene("/Assets/glTF/RiggedFigure.glb");
     m_previous = std::chrono::steady_clock::now();
 }
 
@@ -120,7 +123,8 @@ void Application::Run()
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )
         {
-            pair.second->Render();
+            if (pair.second)
+                pair.second->Render();
         });
 
         RenderDevice::Get().ExecuteCommands();
@@ -173,6 +177,16 @@ void Application::Run()
                     {
                         DeleteAllNodes();
                         SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");   
+                    }
+                    if ( e.key.key == SDLK_3 )
+                    {
+                        DeleteAllNodes();
+                        SetUpScene("/Assets/glTF/RiggedFigure.glb");
+                    }
+                    if ( e.key.key == SDLK_4 )
+                    {
+                        DeleteAllNodes();
+                        SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
                     }
 
                     if ( e.key.key == SDLK_Q )

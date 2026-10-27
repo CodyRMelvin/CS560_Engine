@@ -59,7 +59,9 @@ void Animation::Animate()
             return;
 
         // Get node target of channel
-        Node3D* node = static_cast<Node3D*>( Node::NodeLibrary[channel.target] );
+        Node3D* node = dynamic_cast<Node3D*>( Node::NodeLibrary[channel.target] );
+        if (!node)
+            return;
 
         switch (channel.path)
         {

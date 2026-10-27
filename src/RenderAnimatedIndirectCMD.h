@@ -42,16 +42,15 @@ class RenderAnimatedIndirectCMD: public ICommand
 
             std::vector<glm::mat4> boneMats;
             boneMats.resize( skin.inverseBindMatrices.size() );
-
             glm::mat4 inverseGlobal = glm::inverse( mesh->GlobalTransformMatrix() );
-            std::for_each( skin.joints.begin(), skin.joints.end(),
-            [ &boneMats, &inverseGlobal, &skin ]( uint64_t boneID )
+
+            for( int i = 0;  i < skin.joints.size(); ++i )
             {
-                Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[boneID] );
+                Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[ skin.joints[i] ] );
                 if (!j)
                     return;
-                boneMats[j->matrixIndex] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
-            }); 
+                boneMats[i] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
+            }
 
             pipeline.Bind();
             pipeline.ActiveShader(Shader::shaderTypeVertex);

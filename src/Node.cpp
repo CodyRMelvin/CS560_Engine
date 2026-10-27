@@ -139,7 +139,7 @@ glm::mat4 Node3D::GlobalTransformMatrix()
     if (!parent)
         return m_transform.Matrix();
 
-    glm::mat4 result = m_transform.Matrix() * parent->GlobalTransformMatrix();
+    glm::mat4 result = parent->GlobalTransformMatrix() * m_transform.Matrix();
     return result;
 }
 

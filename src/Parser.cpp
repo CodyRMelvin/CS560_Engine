@@ -19,17 +19,23 @@
 #include "fastgltf/tools.hpp"
 
 #include <expected>
-#include <regex>
-#include <xcb/xproto.h>
 
-fastgltf::Parser Parser::m_parser;
-
-Parser::Parser( std::string path, fastgltf::Options options  )
-    : m_filePath(path) 
+Parser::Parser( std::string path, fastgltf::Options options, fastgltf::Extensions extensions )
+    : m_parser(extensions)
+    , m_filePath(path) 
     , m_asset() 
     , m_buffer()
     , m_opened(false)
 {
+    // Purely to check if file can be read
+    auto expectedFile = fastgltf::MappedGltfFile::FromPath(path); 
+    if ( expectedFile.error() != fastgltf::Error::None )
+    {
+        Logger::LogLine( Logger::severityWarning, "Failed to read gltf file from path {}, error: {}", 
+                         path, fastgltf::getErrorMessage( expectedFile.error() ) );
+        return;
+    }
+
     auto expectedBuf = fastgltf::GltfDataBuffer::FromPath(m_filePath);
     if ( expectedBuf.error() != fastgltf::Error::None )
     {
@@ -51,8 +57,9 @@ Parser::Parser( std::string path, fastgltf::Options options  )
     m_opened = true;
 }
 
-Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
-    : m_filePath(path) 
+Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf::Extensions extensions  )
+    : m_parser(extensions)
+    , m_filePath(path) 
     , m_asset() 
     , m_buffer()
     , m_opened(false)
@@ -259,7 +266,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         glm::mat4 m = glm::make_mat4( mat.data() );
         s.inverseBindMatrices.push_back(m);
     });
-
+    
     s.joints.insert( s.joints.end(), skin.joints.begin(), skin.joints.end());
 
     if ( skin.skeleton.has_value() )
@@ -288,7 +295,36 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
         if (!j)
             continue;
         j->matrixIndex = i;
-    }
+    }/*
+    
+    s.skeleton = 3;
+    s.joints.push_back(3);
+    s.joints.push_back(4);
+    s.joints.push_back(5);
+
+    Joint* j3 = new Joint();
+    j3->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ 0, 1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
+    j3->m_children.push_back(4);
+    j3->m_children.push_back(5);
+    j3->m_ID = 3;
+    j3->m_parent = 3;
+    j3->matrixIndex = 3;
+    Node::NodeLibrary[3] = j3;
+
+    Joint* j4 = new Joint();
+    j4->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ -1, -1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
+    j4->m_ID = 4;
+    j4->m_parent = 3;
+    j4->matrixIndex = 4;
+    Node::NodeLibrary[4] = j4;
+
+    Joint* j5 = new Joint();
+    j5->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ 1, -1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
+    j5->m_ID = 5;
+    j5->m_parent = 3;
+    j5->matrixIndex = 5;
+    Node::NodeLibrary[5] = j5;*/
+
 
     return s;
 }
@@ -395,6 +431,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                 for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
                 {
                     Joint* j = static_cast<Joint*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
+                    //vertices[i].pos = j->LocalTransform().Matrix()[3];
                     vertices[i].pos = j->GlobalTransformMatrix()[3];
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
                     vertices[i].tex = glm::vec2(0);
@@ -411,6 +448,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options  )
                         indexBuffer.push_back( std::distance( expectSkin.value().joints.begin(), childIt ) );
                     }
                 }
+
                 m.UnMapVertexBuffer(pIndex);
                 m.EnableVertexAttribute( pIndex, 0, 3, GL_FLOAT, offsetof( Vertex, pos ) ); 
                 m.EnableVertexAttribute( pIndex, 1, 3, GL_FLOAT, offsetof( Vertex, nrm ) ); 
