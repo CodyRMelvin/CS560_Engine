@@ -9,6 +9,7 @@
 
 #include "Common.h"
 #include "RenderDevice.h"
+#include "SDL3/SDL_video.h"
 #include "ShaderLibrary.h"
 #include "Parser.h"
 #include "Camera.h"
@@ -18,6 +19,9 @@
 #include "fastgltf/core.hpp"
 #include "glad/glad.h"
 #include "SDL3/SDL_events.h"
+#include "imgui.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_opengl3.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -69,7 +73,7 @@ void Application::SetUpScene( std::string assetDir )
     {
         m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
                       .SetPlaneDistances( .1f, 100.f )
-                      .LookAt( { 0, 0, 10 }, { 0, 0, 0 }, { 0, 1, 0 } );
+                      .LookAt( { 0, 0, 2 }, { 0, 0, 0 }, { 0, 1, 0 } );
     }
 
     std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
@@ -85,6 +89,20 @@ void Application::Initialize()
     Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
 
     m_window.Initialize();
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImGui::StyleColorsDark();
+    style.FontSizeBase = 16.f;
+    style.ScaleAllSizes( SDL_GetDisplayContentScale( SDL_GetPrimaryDisplay() ) );
+
+    ImGui_ImplSDL3_InitForOpenGL( m_window.SDLWindow(), m_window.Context() ); 
+    ImGui_ImplOpenGL3_Init();
+
     RenderDevice::Get().Initialize();
     RenderDevice::Get().config = 
     { 
@@ -127,16 +145,30 @@ void Application::Run()
                 pair.second->Render();
         });
 
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplSDL3_NewFrame();
+        ImGui::NewFrame();
+
+        ImGui::ShowDemoWindow();
+
+        ImGui::Render();
         RenderDevice::Get().ExecuteCommands();
+        ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
         m_window.SwapWindow();
 
         while ( SDL_PollEvent(&e) )
         {
+            ImGui_ImplSDL3_ProcessEvent(&e);
+
             switch(e.type)
             {
                 case SDL_EVENT_QUIT:
                     Logger::LogLine( Logger::severityInfo, "Event quit" );
                     m_shouldQuit = true;
+                    break;
+
+                case SDL_EVENT_WINDOW_RESIZED:
+                    m_window.Resize( glm::uvec2{ e.window.data1, e.window.data2 } ); 
                     break;
                 
                 case SDL_EVENT_KEY_DOWN:
@@ -148,6 +180,10 @@ void Application::Run()
                         m_activeCamera.Strafe(.5);
                     if (e.key.key == SDLK_A)
                         m_activeCamera.Strafe(-.5);
+                    if ( e.key.key == SDLK_Q )
+                        m_activeCamera.Rise(-.5);
+                    if ( e.key.key == SDLK_E )
+                        m_activeCamera.Rise(.5);
                     
                     if (e.key.key == SDLK_UP)
                         m_activeCamera.Rotate( { 1, 0, 0 }, .05 );
@@ -189,7 +225,7 @@ void Application::Run()
                         SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
                     }
 
-                    if ( e.key.key == SDLK_Q )
+                    if ( e.key.key == SDLK_ESCAPE )
                     {
                         SDL_Event eQuit;
                         SDL_zero(eQuit);
@@ -199,15 +235,22 @@ void Application::Run()
                     break;
             }
         }
+
     }
 }
 
 void Application::Shutdown()
 {
     Logger::LogLine( Logger::severityInfo, "Shutting down application" );
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL3_Shutdown();
+    ImGui::DestroyContext();    
+
     m_window.Destroy();
     DeleteAllNodes();
     ShaderLibrary::DeleteShaders();
+
     Logger::Shutdown();
 }
 

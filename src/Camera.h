@@ -31,7 +31,7 @@ class Camera : public Node3D
         glm::vec3 Up() const;
         glm::vec3 Right() const;
         glm::vec3 Back() const;
-        glm::vec3 Viewport() const;
+        //glm::vec3 Viewport() const;
         float Near() const;
         float Far() const;
 
@@ -48,7 +48,8 @@ class Camera : public Node3D
     private:
         glm::vec3 m_center;
         glm::vec3 m_right, m_back, m_up;
-        float m_vpDistance, m_nearDistance, m_farDistance, m_vpWidth, m_vpHeight;
+        float m_zNear, m_zFar;
+        float m_fov, m_aspect;
 };
 
 #endif

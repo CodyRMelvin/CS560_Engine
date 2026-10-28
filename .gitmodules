@@ -7,3 +7,6 @@
 [submodule "dependencies/external/fastgltf"]
 	path = dependencies/external/fastgltf
 	url = https://github.com/spnda/fastgltf
+[submodule "dependencies/external/DearImGUI"]
+	path = dependencies/external/DearImGUI
+	url = https://github.com/ocornut/imgui

@@ -9,8 +9,12 @@
 
 #include "Logger.h"
 
+#include "SDL3/SDL_video.h"
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_hints.h>
+#include "glad/glad.h"
+#include "imgui_impl_sdl3.h"
+#include "imgui_impl_opengl3.h"
 
 Window::Window()
     : m_res( 800, 600 )
@@ -39,10 +43,15 @@ void Window::Initialize()
         throw e;
     }
 
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 5);
-    
-    m_p_window = SDL_CreateWindow( "Window", m_res.x, m_res.y, SDL_WINDOW_OPENGL );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, 0 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+    SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 6 );
+    SDL_GL_SetAttribute( SDL_GL_DOUBLEBUFFER, 1 );
+    SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
+    SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
+
+    m_p_window = SDL_CreateWindow( "Window", m_res.x, m_res.y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY );
     if (!m_p_window)
     {
         std::runtime_error e( std::format( "SDL_CreateWindow error {}", SDL_GetError() ) );
@@ -56,7 +65,11 @@ void Window::Initialize()
         throw e;
     }
 
+    SDL_GL_MakeCurrent( m_p_window, m_p_context );
     SDL_GL_SetSwapInterval(1);
+    SDL_SetWindowPosition( m_p_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED );
+    SDL_ShowWindow(m_p_window);
+    
     Logger::LogLine( Logger::severityInfo, "SDL3 intialized" );
 }
 
@@ -70,4 +83,10 @@ void Window::Destroy()
 void Window::SwapWindow() const
 {
     SDL_GL_SwapWindow(m_p_window);
+}
+
+void Window::Resize( glm::uvec2 res )
+{
+    m_res = res;
+    glViewport( 0, 0, res.x, res.y );
 }

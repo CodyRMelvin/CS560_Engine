@@ -16,12 +16,15 @@ target_include_directories( ${PROJECT_NAME} PRIVATE external/SIV )
 add_subdirectory(external/SDL)
 add_subdirectory(external/glm)
 add_subdirectory(external/fastgltf)
+add_subdirectory(external/DearImGUI)
 
 target_link_libraries( ${PROJECT_NAME} INTERFACE SDL3::SDL3 )
 target_link_libraries( ${PROJECT_NAME} INTERFACE glm::glm )
 target_link_libraries( ${PROJECT_NAME} INTERFACE fastgltf )
+target_link_libraries( ${PROJECT_NAME} INTERFACE DearImGUI )
 
 include_directories(external/glm)
+include_directories(external/DearImGUI)
 
 find_package(OpenGL REQUIRED)
 target_link_libraries( ${PROJECT_NAME} PRIVATE OpenGL::GL )

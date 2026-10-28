@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #pragma once
+#include <immintrin.h>
 #ifndef WINDOW_H
 #define WINDOW_H
 
@@ -26,8 +27,11 @@ class Window
         void Initialize();
         void Destroy();
         void SwapWindow() const;
+        void Resize( glm::uvec2 res );
 
         float AspectRatio() { return float(m_res.x) / float(m_res.y); }
+        SDL_Window* SDLWindow() const { return m_p_window; }
+        SDL_GLContext Context() const { return m_p_context; }
 
     private:
         glm::uvec2 m_res;
