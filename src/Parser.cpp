@@ -435,7 +435,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
                     vertices[i].pos = j->GlobalTransformMatrix()[3];
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
                     vertices[i].tex = glm::vec2(0);
-                    vertices[i].boneIds = glm::ivec4( 0, 0, 0, 0 );
+                    vertices[i].boneIds = glm::ivec4( i, 0, 0, 0 );
                     vertices[i].weights = glm::vec4( 1, 0, 0, 0 );
 
                     for ( const size_t child : j->m_children )

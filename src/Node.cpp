@@ -106,6 +106,26 @@ glm::mat4 Node3D::GlobalTransformMatrix() const
     if (!parent)
         return m_transform.Matrix();
 
+    std::vector<glm::mat4> transforms;
+    const auto& GetTransforms = 
+    [&transforms]( this const auto self, const Node3D* node )
+    {
+        transforms.push_back( node->LocalTransform().Matrix() );
+        if ( node->ID() == node->ParentID() )
+            return;
+
+        self( static_cast<Node3D*>( node->Parent() ) );
+    };
+
+    /*GetTransforms(this);
+    glm::mat4 result = glm::mat4{1};
+    
+    std::for_each( transforms.begin(), transforms.end(), 
+    [&result]( const glm::mat4& mat )
+    {
+        result = result * mat;
+    });*/
+
     glm::mat4 result = m_transform.Matrix() * parent->GlobalTransformMatrix();
     return result;
 }

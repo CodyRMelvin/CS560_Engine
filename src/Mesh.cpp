@@ -99,7 +99,7 @@ void Mesh::Render()
 
         RenderDevice::Get().Push(cmd); 
     }
-    if ( RenderDevice::Get().config.renderSkeleton && m_skin.has_value() )
+    /*if (RenderDevice::Get().config.renderSkeleton && m_skin.has_value())
     {
         RenderAnimationBonesCMD* cmd = new RenderAnimationBonesCMD();
         cmd->meshIndex = m_ID;
@@ -108,7 +108,7 @@ void Mesh::Render()
         cmd->pipeline = m_pipeline;
 
         RenderDevice::Get().Push(cmd); 
-    }
+    }*/
 }
 
 void Mesh::Destroy()
@@ -351,8 +351,8 @@ void Mesh::DrawPrimitives() const
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
         {
-            if ( idx == i )
-                continue;
+            //if ( idx == i )
+                //continue;
 
             DrawPrimitive(i);
         }
