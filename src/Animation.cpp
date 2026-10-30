@@ -14,10 +14,12 @@ std::vector<Animation> Animation::AnimationLibrary;
 
 Animation::Animation( uint64_t id, uint64_t parent )
     : m_channels()
+    , m_name() 
 { }
 
 Animation::Animation( const Animation& other )
     : m_channels( other.m_channels.begin(), other.m_channels.end() )
+    , m_name(other.m_name)
 { }
 
 void Animation::Initialize()
@@ -38,6 +40,7 @@ void Animation::Animate()
 {
     //return;
     float dt = Application::Get().GetDeltaTime();
+    //dt *= 10;
     //dt = .01;
 
     std::for_each( m_channels.begin(), m_channels.end(), 

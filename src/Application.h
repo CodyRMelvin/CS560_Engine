@@ -25,7 +25,7 @@ class Application
 
         Window& GetWindow() { return m_window; }
         Camera& GetActiveCamera() { return m_activeCamera; }
-        float GetDeltaTime() const { return m_deltaTime; }
+        float GetDeltaTime() const { return m_dtScalar * m_deltaTime; }
 
     private:
         Window m_window;
@@ -34,6 +34,7 @@ class Application
         std::chrono::time_point<std::chrono::steady_clock> m_now;
         std::chrono::time_point<std::chrono::steady_clock> m_previous;
         float m_deltaTime;
+        float m_dtScalar;
 
         Application();
         void SetUpScene( std::string assetDir );

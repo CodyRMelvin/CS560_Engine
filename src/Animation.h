@@ -56,11 +56,16 @@ class Animation
         void Initialize();
         void Animate();
 
+        std::string_view Name() const { return m_name; }
+        void Name( std::string name ) { m_name = name; }
+        void Name( const char* name ) { m_name = name; }
+
         Channel GetChannel( size_t index ) const;
         void AddChannel( const Channel& channel );
 
     private:
         std::vector<Channel> m_channels;
+        std::string m_name;
 };
 
 #endif

@@ -340,27 +340,37 @@ void Mesh::EnableIndexBuffer( size_t index )
 
 void Mesh::DrawPrimitives() const
 {
-    if (!RenderDevice::Get().config.renderMesh)
+    RenderDeviceSettings& config = RenderDevice::Get().config;
+    if ( !config.renderMesh && !config.renderSkeleton )
         return;
 
     // If there is a primitive for drawing the skeleton, perform the draw operation while checking against the index 
     // to ensure the skeleton primitive isn't drawn here.
     m_animationPrimitiveIndex.and_then(
-    [this]( const size_t idx ) -> std::optional<size_t>
+    [ &config, this ]( const size_t idx ) -> std::optional<size_t>
     {
+        if (!config.renderMesh)
+        {
+            DrawPrimitive(idx);
+            return idx;
+        }
+
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
         {
-            //if ( idx == i )
-                //continue;
+            if ( idx == i && !config.renderSkeleton )
+                continue;
 
             DrawPrimitive(i);
         }
         return idx;
     })
     .or_else(
-    [this]() -> std::optional<size_t>
+    [ &config, this ]() -> std::optional<size_t>
     {
+        if (!config.renderMesh)
+            return false;
+
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
             DrawPrimitive(i);

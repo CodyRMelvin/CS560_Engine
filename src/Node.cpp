@@ -7,6 +7,7 @@
 
 #include "Node.h"
 #include "Transform.h"
+#include "Animation.h"
 
 std::unordered_map< uint64_t, Node* > Node::NodeLibrary;
 
@@ -184,4 +185,6 @@ void DeleteAllNodes()
     });
 
     Node::NodeLibrary.clear();
+
+    Animation::AnimationLibrary.clear();
 }

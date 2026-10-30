@@ -17,7 +17,7 @@
 #include "imgui_impl_opengl3.h"
 
 Window::Window()
-    : m_res( 800, 600 )
+    : m_res( 1600, 1200 )
     , m_p_window(nullptr)
     , m_p_context(nullptr)
 { }

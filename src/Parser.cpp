@@ -335,7 +335,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
     Animation anim;
     for ( const fastgltf::AnimationChannel& channel : animation.channels )
     {
-        if ( !channel.nodeIndex.value() )
+        if ( !channel.nodeIndex.has_value() )
             return std::unexpected( Error( "No node index in animaation channel", Error::errorMinor ) );
 
         Animation::Channel c = {0};
@@ -386,6 +386,7 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
         anim.AddChannel(c);
     }
 
+    anim.Name( animation.name.c_str() );
     return anim;
 }
 
@@ -431,8 +432,8 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
                 for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
                 {
                     Joint* j = static_cast<Joint*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
-                    //vertices[i].pos = j->LocalTransform().Matrix()[3];
-                    vertices[i].pos = j->GlobalTransformMatrix()[3];
+                    vertices[i].pos = j->LocalTransform().Translation();
+                    //vertices[i].pos = j->GlobalTransformMatrix()[3];
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
                     vertices[i].tex = glm::vec2(0);
                     vertices[i].boneIds = glm::ivec4( i, 0, 0, 0 );

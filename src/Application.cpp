@@ -13,7 +13,6 @@
 #include "ShaderLibrary.h"
 #include "Parser.h"
 #include "Camera.h"
-#include "Pipeline.h"
 #include "Node.h"
 
 #include "fastgltf/core.hpp"
@@ -28,11 +27,14 @@
 #include <typeinfo>
 
 bool animate = false;
+int activeAnimation = 0;
 
 Application::Application()
     : m_window()
     , m_activeCamera() 
     , m_shouldQuit(false)
+    , m_deltaTime(0)
+    , m_dtScalar(1)
 { }
 
 Application::~Application()
@@ -71,9 +73,9 @@ void Application::SetUpScene( std::string assetDir )
         m_activeCamera = *static_cast<Camera*>(camIt->second);
     else
     {
-        m_activeCamera.SetViewingDimensions( 90.f, 4.f / 3.f )
-                      .SetPlaneDistances( .1f, 100.f )
-                      .LookAt( { 0, 0, 2 }, { 0, 0, 0 }, { 0, 1, 0 } );
+        m_activeCamera.SetViewingDimensions( 90.f, m_window.AspectRatio() )
+                      .SetPlaneDistances( .1f, 1000.f )
+                      .LookAt( { 0, .5, 1.5 }, { 0, 1, 0 }, { 0, 1, 0 } );
     }
 
     std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
@@ -81,6 +83,7 @@ void Application::SetUpScene( std::string assetDir )
     {
         anim.Initialize();
     });
+    activeAnimation = 0;
 }
 
 void Application::Initialize()
@@ -93,7 +96,6 @@ void Application::Initialize()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     ImGuiStyle& style = ImGui::GetStyle();
     ImGui::StyleColorsDark();
@@ -109,11 +111,11 @@ void Application::Initialize()
         .clearOptions = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, 
         .clearColor = { .3, .2, 1, 1 },
         .renderSkeleton = true,
-        .renderMesh = false,
+        .renderMesh = true,
     };
 
-    //SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");
-    SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
+    SetUpScene("/Assets/glTF/roman_D_2/roman_D.gltf");
+    //SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
     //SetUpScene("/Assets/glTF/RiggedFigure.glb");
     m_previous = std::chrono::steady_clock::now();
 }
@@ -131,11 +133,12 @@ void Application::Run()
 
         if (animate)
         {
-            std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
+            Animation::AnimationLibrary[activeAnimation].Animate();
+            /*std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
             []( Animation& anim )
             {
                 anim.Animate();
-            });
+            });*/
         }
 
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
@@ -150,6 +153,21 @@ void Application::Run()
         ImGui::NewFrame();
 
         ImGui::ShowDemoWindow();
+
+        ImGui::Begin("Config");
+        ImGui::Checkbox( "Render Mesh", &RenderDevice::Get().config.renderMesh );
+        ImGui::Checkbox( "Render Skeleton", &RenderDevice::Get().config.renderSkeleton );
+        ImGui::Checkbox( "Play Animation", &animate );
+        ImGui::DragFloat( "Delta Time Scalar", &m_dtScalar, .01, 0, 10 );
+
+        std::vector<const char*> animations;
+        for ( const Animation& anim : Animation::AnimationLibrary )
+            animations.push_back( anim.Name().data() );
+
+        ImGui::Text("Active Animation");
+        ImGui::ListBox( " ", &activeAnimation, animations.data(), animations.size() );
+
+        ImGui::End();
 
         ImGui::Render();
         RenderDevice::Get().ExecuteCommands();
@@ -212,7 +230,7 @@ void Application::Run()
                     if ( e.key.key == SDLK_2 )
                     {
                         DeleteAllNodes();
-                        SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");   
+                        SetUpScene("/Assets/glTF/roman_D_2/roman_D.gltf");   
                     }
                     if ( e.key.key == SDLK_3 )
                     {
@@ -223,6 +241,11 @@ void Application::Run()
                     {
                         DeleteAllNodes();
                         SetUpScene("/Assets/glTF/SimpleSkin/SimpleSkin.gltf");
+                    }
+                    if ( e.key.key == SDLK_5 )
+                    {
+                        DeleteAllNodes();
+                        SetUpScene("/Assets/glTF/roman_D_out/roman_D.gltf");   
                     }
 
                     if ( e.key.key == SDLK_ESCAPE )
