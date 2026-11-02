@@ -42,7 +42,7 @@ Application::~Application()
 void Application::SetUpScene( std::string assetDir )
 {
     std::filesystem::path dir( GetCWD().string() + assetDir );   
-    Parser parser( dir, fastgltf::Options::LoadExternalBuffers );
+    Parser parser( dir, fastgltf::Options::LoadExternalBuffers | fastgltf::Options::DecomposeNodeMatrices );
     if (!parser)
     {
         std::runtime_error e("Failed to construct parser");
@@ -214,19 +214,6 @@ void Application::Run()
                     // Press space to toggle animation
                     if ( e.key.key == SDLK_SPACE )
                         RenderDevice::Get().config.pauseAnimation ^= true;
-
-                    if ( e.key.key == SDLK_P )
-                    {
-                        Node3D* joint = dynamic_cast<Node3D*>( Node::NodeLibrary[4] );
-                        if (joint)
-                            joint->LocalTransform().Translation().x += .5f;
-                    }
-                    if ( e.key.key == SDLK_O )
-                    {
-                        Node3D* joint = dynamic_cast<Node3D*>( Node::NodeLibrary[4] );
-                        if (joint)
-                            joint->LocalTransform().Translation().x -= .5f;
-                    }
 
                     if ( e.key.key == SDLK_1 )
                     {

@@ -74,7 +74,7 @@ void Animation::Animate()
         if ( frameIt != channel.frames.begin() && frameIt != channel.frames.end() )
             prevFrame = *( frameIt - 1 );
 
-        float alpha = ( channel.elapsedTime - nextFrame.time ) / ( nextFrame.time - prevFrame.time );
+        float alpha = ( channel.elapsedTime - prevFrame.time ) / ( nextFrame.time - prevFrame.time );
 
 
         // Get node target of channel
