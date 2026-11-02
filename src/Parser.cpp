@@ -9,7 +9,6 @@
 #include "Mesh.h"
 #include "Camera.h"
 #include "Application.h"
-#include "Joint.h"
 #include "Animation.h"
 
 #include "Shader.h"
@@ -271,60 +270,6 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
 
     if ( skin.skeleton.has_value() )
         s.skeleton = skin.skeleton.value();
-    else
-        s.skeleton = s.joints[0];
-
-    const auto& AddJoints = 
-    [ &s, this ]( this const auto& self, size_t index, size_t parent ) -> void
-    {
-        fastgltf::Node node = m_asset.nodes[index];
-        Joint* j = new Joint( index, parent );
-        j->LocalTransform( std::get<fastgltf::TRS>(node.transform) );
-        j->m_children.insert( j->m_children.begin(), node.children.begin(), node.children.end() );
-
-        Node::NodeLibrary[index] = j;
-        for ( const size_t idx : j->m_children )
-            self( idx, index );
-    };
-
-    AddJoints( s.skeleton, s.skeleton );
-
-    for ( int i = 0; i < s.joints.size(); ++i )
-    {
-        Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[ s.joints[i] ] );
-        if (!j)
-            continue;
-        j->matrixIndex = i;
-    }/*
-    
-    s.skeleton = 3;
-    s.joints.push_back(3);
-    s.joints.push_back(4);
-    s.joints.push_back(5);
-
-    Joint* j3 = new Joint();
-    j3->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ 0, 1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
-    j3->m_children.push_back(4);
-    j3->m_children.push_back(5);
-    j3->m_ID = 3;
-    j3->m_parent = 3;
-    j3->matrixIndex = 3;
-    Node::NodeLibrary[3] = j3;
-
-    Joint* j4 = new Joint();
-    j4->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ -1, -1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
-    j4->m_ID = 4;
-    j4->m_parent = 3;
-    j4->matrixIndex = 4;
-    Node::NodeLibrary[4] = j4;
-
-    Joint* j5 = new Joint();
-    j5->LocalTransform( Transform( glm::vec3{ 1, 1, 1 }, glm::vec3{ 1, -1, 0, }, glm::vec3{ 0, 1, 0 }, 0 ) );
-    j5->m_ID = 5;
-    j5->m_parent = 3;
-    j5->matrixIndex = 5;
-    Node::NodeLibrary[5] = j5;*/
-
 
     return s;
 }
@@ -431,7 +376,10 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
                 Vertex* vertices = static_cast<Vertex*>( m.MapVertexBuffer( pIndex, GL_WRITE_ONLY ) );
                 for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
                 {
-                    Joint* j = static_cast<Joint*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
+                    Node3D* j = dynamic_cast<Node3D*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
+                    if (!j)
+                        continue;
+
                     vertices[i].pos = j->LocalTransform().Translation();
                     //vertices[i].pos = j->GlobalTransformMatrix()[3];
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
@@ -481,18 +429,24 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
             newNode  = new Camera( expectCam.value() );
         }
 
-        if (newNode)
+        uint64_t idx = std::distance( m_asset.nodes.begin(), nodeIt );
+        if (!newNode)
         {
-            newNode->m_ID = std::distance( m_asset.nodes.begin(), nodeIt );
-            Node::NodeLibrary[newNode->m_ID] = newNode;
-            newNode->m_parent = newNode->m_ID;
-            newNode->m_children.insert(newNode->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
-
-
-            Node3D* derived = dynamic_cast<Node3D*>(newNode); 
-            if (derived)
-                derived->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
+            if ( Node::NodeLibrary.contains(idx) )
+                newNode = Node::NodeLibrary[idx];
+            if (!newNode)
+                newNode = new Node3D;
         }
+
+        newNode->m_ID = idx;
+        Node::NodeLibrary[newNode->m_ID] = newNode;
+        newNode->m_parent = newNode->m_ID;
+        newNode->m_children.insert(newNode->m_children.end(), nodeIt->children.begin(), nodeIt->children.end() );
+
+
+        Node3D* derived = dynamic_cast<Node3D*>(newNode); 
+        if (derived)
+            derived->LocalTransform( std::get<fastgltf::TRS>(nodeIt->transform) );
     }
 
     for ( const fastgltf::Animation& animation : m_asset.animations )
@@ -518,7 +472,8 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
         [&pair]( uint64_t idx )
         {
             Node* child = Node::NodeLibrary[idx];
-            child->m_parent = pair.second->m_ID; 
+            if (child)
+                child->m_parent = pair.second->m_ID; 
         });
     });
 

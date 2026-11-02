@@ -26,7 +26,6 @@
 #include <stdexcept>
 #include <typeinfo>
 
-bool animate = false;
 int activeAnimation = 0;
 
 Application::Application()
@@ -131,15 +130,8 @@ void Application::Run()
         m_now = std::chrono::steady_clock::now();
         m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>( m_now - m_previous ).count() / 1000.f;
 
-        if (animate)
-        {
+        if ( !RenderDevice::Get().config.pauseAnimation )
             Animation::AnimationLibrary[activeAnimation].Animate();
-            /*std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
-            []( Animation& anim )
-            {
-                anim.Animate();
-            });*/
-        }
 
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )
@@ -157,7 +149,8 @@ void Application::Run()
         ImGui::Begin("Config");
         ImGui::Checkbox( "Render Mesh", &RenderDevice::Get().config.renderMesh );
         ImGui::Checkbox( "Render Skeleton", &RenderDevice::Get().config.renderSkeleton );
-        ImGui::Checkbox( "Play Animation", &animate );
+        ImGui::Checkbox( "Pause Animation", &RenderDevice::Get().config.pauseAnimation );
+        ImGui::Checkbox( "Render Skinned", &RenderDevice::Get().config.renderSkinned );
         ImGui::DragFloat( "Delta Time Scalar", &m_dtScalar, .01, 0, 10 );
 
         std::vector<const char*> animations;
@@ -220,7 +213,20 @@ void Application::Run()
                         RenderDevice::Get().config.renderSkeleton ^= true;
                     // Press space to toggle animation
                     if ( e.key.key == SDLK_SPACE )
-                        animate = !animate;
+                        RenderDevice::Get().config.pauseAnimation ^= true;
+
+                    if ( e.key.key == SDLK_P )
+                    {
+                        Node3D* joint = dynamic_cast<Node3D*>( Node::NodeLibrary[4] );
+                        if (joint)
+                            joint->LocalTransform().Translation().x += .5f;
+                    }
+                    if ( e.key.key == SDLK_O )
+                    {
+                        Node3D* joint = dynamic_cast<Node3D*>( Node::NodeLibrary[4] );
+                        if (joint)
+                            joint->LocalTransform().Translation().x -= .5f;
+                    }
 
                     if ( e.key.key == SDLK_1 )
                     {

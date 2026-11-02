@@ -72,7 +72,7 @@ void Mesh::Initialize()
 
 void Mesh::Render()
 {
-    if ( m_skin.has_value() )
+    if ( m_skin.has_value() && RenderDevice::Get().config.renderSkinned )
     {
         // Temporary implementation
         // TODO: implement pipeline library

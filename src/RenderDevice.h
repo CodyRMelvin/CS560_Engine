@@ -27,6 +27,8 @@ struct RenderDeviceSettings
     glm::vec4 clearColor = glm::vec4{0};
     bool renderSkeleton = false;
     bool renderMesh = true;
+    bool pauseAnimation = true;
+    bool renderSkinned = true;
 };
 
 class RenderDevice

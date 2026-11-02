@@ -14,7 +14,6 @@
 #include "Pipeline.h"
 #include "Mesh.h"
 #include "Application.h"
-#include "Joint.h"
 
 class RenderAnimationBonesCMD : public ICommand
 {
@@ -46,7 +45,7 @@ public:
         Vertex* vertices = static_cast<Vertex*>( m->MapVertexBuffer( m->GetAnimationPrimitive(), GL_WRITE_ONLY ) );
         for ( int i = 0; i < m->GetSkin().joints.size(); ++i )
         {
-            vertices[i].pos = static_cast<Joint*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->GlobalTransformMatrix()[3];
+            vertices[i].pos = static_cast<Node3D*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->GlobalTransformMatrix()[3];
             //vertices[i].pos = static_cast<Joint*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->LocalTransform().Matrix()[3];
         }
         m->UnMapVertexBuffer( m->GetAnimationPrimitive() );

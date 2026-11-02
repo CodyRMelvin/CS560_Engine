@@ -73,6 +73,7 @@ glm::mat4 Transform::Matrix()
     m_matrix = glm::translate( glm::mat4(1), m_translation ) * 
                m_rotation.RotationMatrix() * glm::scale( glm::mat4(1), m_scale );
 
+    m_isDirty = false;
     return m_matrix;
 }
 

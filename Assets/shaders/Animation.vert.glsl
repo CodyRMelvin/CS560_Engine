@@ -29,5 +29,5 @@ void main ()
         weights.w * boneMatrices[boneIDs.w]; 
 
     gl_Position = perspective * modelView * boneTransform * vec4( pos, 1.f );
-    cameraNormal = mat3(normalMatrix) * normal;
+    cameraNormal = normalize( mat3(normalMatrix) * mat3(boneTransform) * normal );
 }

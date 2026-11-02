@@ -46,20 +46,26 @@ void Animation::Animate()
     std::for_each( m_channels.begin(), m_channels.end(), 
     [dt]( Channel& channel )
     {
+        if ( channel.frames.empty() )
+            return;
+
         // Loop elapsed time
         channel.elapsedTime = std::fmod( channel.elapsedTime, channel.frames.back().time );
         // Update with dt
         channel.elapsedTime += dt;
 
         // Get frame with greatest time vlaue under elapsed time 
-        auto frameIt = std::lower_bound( channel.frames.begin(), channel.frames.end(), channel.elapsedTime,
-        []( Frame& frame, float dt )
+        auto frameIt = std::upper_bound( channel.frames.begin(), channel.frames.end(), channel.elapsedTime,
+        []( float dt, Frame& frame )
         {
-            return frame.time < dt;
+            return dt < frame.time;
         });
 
-        if ( frameIt == channel.frames.end() )
-            return;
+        //if ( frameIt == channel.frames.end() )
+            //return;
+
+        if ( frameIt != channel.frames.begin() )
+            --frameIt;
 
         // Get node target of channel
         Node3D* node = dynamic_cast<Node3D*>( Node::NodeLibrary[channel.target] );

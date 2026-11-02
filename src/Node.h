@@ -56,11 +56,11 @@ class Node3D : public Node
         Node3D() = default;
         Node3D( uint64_t id, uint64_t parent );
         Node3D( const Node3D& other );
-        virtual ~Node3D() {};
+        ~Node3D() {};
 
-        virtual void Initialize() = 0;
-        virtual void Render() = 0;
-        virtual void Destroy() = 0;
+        virtual void Initialize() {}
+        virtual void Render() {}
+        virtual void Destroy() {}
 
         //Transform GlobalTransform() const;
         glm::mat4 GlobalTransformMatrix() const;

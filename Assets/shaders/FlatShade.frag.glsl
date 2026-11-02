@@ -5,7 +5,7 @@ out vec4 color;
 
 void main ()
 {
-    vec3 n = normalize(cameraNormal);
+    vec3 n = cameraNormal;
     float shade = max( max(0, n.z), max(n.x, n.y) );
     color = vec4( n, 1 );
 }

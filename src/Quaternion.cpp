@@ -78,16 +78,16 @@ glm::vec3 Quat::Rotate( const glm::vec3& v ) const
 
 glm::mat4 Quat::RotationMatrix() const
 {
-    float mag = this->Magnitude();
+    float mag = Magnitude();
     if (!mag)
         return glm::mat4(1);
 
     Quat q = *this / mag;
     return glm::mat4
     (
-        1 - 2 * q.y * q.y - 2 * q.z * q.z, 2 * q.x * q.y - 2 * q.w * q.z,     2 * q.x * q.z + 2 * q.w * q.y,     0,
-        2 * q.x * q.y + 2 * q.w * q.z,     1 - 2 * q.x * q.x - 2 * q.z * q.z, 2 * q.y * q.z - 2 * q.w * q.z,     0,
-        2 * q.x * q.z - 2 * q.w * q.y,     2 * q.y * q.z + 2 * q.w * q.x,     1 - 2 * q.x * q.x - 2 * q.y * q.y, 0,
+        1 - 2 * q.y * q.y - 2 * q.z * q.z, 2 * q.x * q.y + 2 * q.w * q.z,     2 * q.x * q.z - 2 * q.w * q.y,     0,
+        2 * q.x * q.y - 2 * q.w * q.z,     1 - 2 * q.x * q.x - 2 * q.z * q.z, 2 * q.y * q.z + 2 * q.w * q.x,     0,
+        2 * q.x * q.z + 2 * q.w * q.y,     2 * q.y * q.z - 2 * q.w * q.x,     1 - 2 * q.x * q.x - 2 * q.y * q.y, 0,
         0,                                 0,                                 0,                                 1
     );
 }

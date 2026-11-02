@@ -16,7 +16,6 @@
 #include "Node.h"
 #include "Application.h"
 #include "Mesh.h"
-#include "Joint.h"
 #include "Transform.h"
 
 class RenderAnimatedIndirectCMD: public ICommand
@@ -46,16 +45,17 @@ class RenderAnimatedIndirectCMD: public ICommand
 
             for( int i = 0;  i < skin.joints.size(); ++i )
             {
-                Joint* j = dynamic_cast<Joint*>( Node::NodeLibrary[ skin.joints[i] ] );
+                Node3D* j = dynamic_cast<Node3D*>( Node::NodeLibrary[ skin.joints[i] ] );
                 if (!j)
                     return;
-                boneMats[i] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[j->matrixIndex];
+
+                boneMats[i] = inverseGlobal * j->GlobalTransformMatrix() * skin.inverseBindMatrices[i];
             }
 
             pipeline.Bind();
             pipeline.ActiveShader(Shader::shaderTypeVertex);
 
-            glm::mat4 modelView = Application::Get().GetActiveCamera().View() * mesh->LocalTransform().Matrix();
+            glm::mat4 modelView = Application::Get().GetActiveCamera().View() * mesh->GlobalTransformMatrix();
             pipeline.UniformMat( 0, modelView ); 
             pipeline.UniformMat( 1, Application::Get().GetActiveCamera().Perspective() );
             glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
