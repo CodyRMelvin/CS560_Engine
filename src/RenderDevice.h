@@ -46,13 +46,13 @@ class RenderDevice
 
         void Initialize();
         void ExecuteCommands();
-        void Push( ICommand* cmd );
+        void Push( ICommand* cmd, size_t buffer = 0 );
 
         // Singleton method
         static RenderDevice& Get();
 
     private:
-        std::vector<ICommand*> m_commandBuffer;
+        std::vector< std::vector<ICommand*> > m_commandBuffers;
 
         // Hide constructor to force singleton
         RenderDevice() = default;

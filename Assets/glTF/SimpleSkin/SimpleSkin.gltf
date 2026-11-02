@@ -31,6 +31,7 @@
   } ],
   
   "animations" : [ {
+    "name": "Curve",
     "channels" : [ {
       "sampler" : 0,
       "target" : {

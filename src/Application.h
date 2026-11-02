@@ -35,6 +35,7 @@ class Application
         std::chrono::time_point<std::chrono::steady_clock> m_previous;
         float m_deltaTime;
         float m_dtScalar;
+        std::vector<const char *> m_files;
 
         Application();
         void SetUpScene( std::string assetDir );

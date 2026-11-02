@@ -27,6 +27,8 @@ public:
 
     void Execute()
     {
+        glClear(GL_DEPTH_BUFFER_BIT);
+
         pipeline.Bind();
         pipeline.ActiveShader(Shader::shaderTypeVertex);
 

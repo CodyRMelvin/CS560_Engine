@@ -332,6 +332,9 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
     }
 
     anim.Name( animation.name.c_str() );
+    if ( anim.Name().empty() )
+        anim.Name("Animation");
+
     return anim;
 }
 
@@ -376,18 +379,16 @@ Parser::Parser( std::filesystem::path path, fastgltf::Options options, fastgltf:
                 Vertex* vertices = static_cast<Vertex*>( m.MapVertexBuffer( pIndex, GL_WRITE_ONLY ) );
                 for ( int i = 0; i < expectSkin.value().joints.size(); ++i )
                 {
-                    Node3D* j = dynamic_cast<Node3D*>( Node::NodeLibrary[ expectSkin.value().joints[i] ] );
-                    if (!j)
-                        continue;
+                    fastgltf::Node node = m_asset.nodes[ expectSkin.value().joints[i] ];
 
-                    vertices[i].pos = j->LocalTransform().Translation();
-                    //vertices[i].pos = j->GlobalTransformMatrix()[3];
+                    float* data = std::get<fastgltf::TRS>( node.transform ).translation.data();
+                    vertices[i].pos = glm::vec3( data[0], data[1], data[2] );
                     vertices[i].nrm = glm::vec3( 1, 0, 0 );
                     vertices[i].tex = glm::vec2(0);
                     vertices[i].boneIds = glm::ivec4( i, 0, 0, 0 );
                     vertices[i].weights = glm::vec4( 1, 0, 0, 0 );
 
-                    for ( const size_t child : j->m_children )
+                    for ( const size_t child : node.children )
                     {
                         auto childIt = std::find( expectSkin.value().joints.begin(), expectSkin.value().joints.end(), child );
                         if ( childIt == expectSkin.value().joints.end() )

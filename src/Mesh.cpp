@@ -72,7 +72,8 @@ void Mesh::Initialize()
 
 void Mesh::Render()
 {
-    if ( m_skin.has_value() && RenderDevice::Get().config.renderSkinned )
+    RenderDeviceSettings config = RenderDevice::Get().config;
+    if ( m_skin.has_value() && config.renderSkinned )
     {
         // Temporary implementation
         // TODO: implement pipeline library
@@ -99,16 +100,15 @@ void Mesh::Render()
 
         RenderDevice::Get().Push(cmd); 
     }
-    /*if (RenderDevice::Get().config.renderSkeleton && m_skin.has_value())
+    if ( config.renderSkeleton && m_skin.has_value() )
     {
         RenderAnimationBonesCMD* cmd = new RenderAnimationBonesCMD();
         cmd->meshIndex = m_ID;
         cmd->transform = GlobalTransformMatrix();
-        //cmd->transform = glm::mat4{1};
         cmd->pipeline = m_pipeline;
 
-        RenderDevice::Get().Push(cmd); 
-    }*/
+        RenderDevice::Get().Push( cmd, 1 ); 
+    }
 }
 
 void Mesh::Destroy()
@@ -200,7 +200,7 @@ size_t Mesh::GetAnimationPrimitive()
         return m_animationPrimitiveIndex.value();
 
     m_animationPrimitiveIndex = m_primitives.size();
-    m_primitives.emplace_back( Primitive{ IndirectDrawCommand{0}, 0 } );
+    m_primitives.push_back( Primitive{ IndirectDrawCommand{0}, 0 } );
     return m_animationPrimitiveIndex.value();
 }
 
@@ -341,7 +341,7 @@ void Mesh::EnableIndexBuffer( size_t index )
 void Mesh::DrawPrimitives() const
 {
     RenderDeviceSettings& config = RenderDevice::Get().config;
-    if ( !config.renderMesh && !config.renderSkeleton )
+    if (!config.renderMesh)
         return;
 
     // If there is a primitive for drawing the skeleton, perform the draw operation while checking against the index 
@@ -349,16 +349,10 @@ void Mesh::DrawPrimitives() const
     m_animationPrimitiveIndex.and_then(
     [ &config, this ]( const size_t idx ) -> std::optional<size_t>
     {
-        if (!config.renderMesh)
-        {
-            DrawPrimitive(idx);
-            return idx;
-        }
-
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
         {
-            if ( idx == i && !config.renderSkeleton )
+            if ( idx == i )
                 continue;
 
             DrawPrimitive(i);
@@ -368,9 +362,6 @@ void Mesh::DrawPrimitives() const
     .or_else(
     [ &config, this ]() -> std::optional<size_t>
     {
-        if (!config.renderMesh)
-            return false;
-
         glBindBuffer( GL_DRAW_INDIRECT_BUFFER, m_drawBuffer );
         for ( int i = 0; i < m_primitives.size(); ++i )
             DrawPrimitive(i);

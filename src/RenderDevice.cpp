@@ -40,7 +40,7 @@ void RenderDevice::Initialize()
     ShaderLibrary::CompileShaders( pathStr + "/shaders" );
 
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    //glEnable(GL_CULL_FACE);
 }
 
 void RenderDevice::ExecuteCommands()
@@ -49,22 +49,33 @@ void RenderDevice::ExecuteCommands()
     glClearColor( config.clearColor.x, config.clearColor.y, config.clearColor.z, config.clearColor.a );
     glClear(config.clearOptions);
 
-    std::for_each( m_commandBuffer.begin(), m_commandBuffer.end(), 
-    []( ICommand* cmd )
+    std::for_each( m_commandBuffers.begin(), m_commandBuffers.end(), 
+    []( std::vector<ICommand*>& buffer )
     { 
-        if (!cmd)
-            return;
+        std::for_each( buffer.begin(), buffer.end(),
+        []( ICommand*& cmd )
+        {
+            if (!cmd)
+                return;
 
-        cmd->Execute(); 
-        delete cmd;
-        cmd = nullptr;
+            cmd->Execute(); 
+            delete cmd;
+            cmd = nullptr;
+        });
+
+        buffer.clear();
     });
 
-    m_commandBuffer.clear();
     glFlush();
 }
 
-void RenderDevice::Push( ICommand* cmd )
+void RenderDevice::Push( ICommand* cmd, size_t buffer )
 {
-    m_commandBuffer.push_back(cmd);
+    if ( buffer > m_commandBuffers.size() )
+        return;
+
+    if ( buffer == m_commandBuffers.size() )
+        m_commandBuffers.push_back( std::vector<ICommand*>() );
+
+    m_commandBuffers[buffer].push_back(cmd);
 }
