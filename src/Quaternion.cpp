@@ -44,6 +44,12 @@ void Quat::operator/=( float c )
     V /= c;
 }
 
+Quat Quat::operator-()
+{
+    d *= -1;
+    return *this;
+}
+
 float Quat::Dot( const Quat& other ) const
 {
     return glm::dot( V, other.V ) + S * other.S;
@@ -102,5 +108,10 @@ void Quat::Inverted()
     float n = MagnitudeSquared();
     S /= n;
     V /= -n;
+}
+
+void Quat::Normalize()
+{
+    d /= Magnitude();
 }
 

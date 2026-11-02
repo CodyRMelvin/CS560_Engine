@@ -49,10 +49,17 @@ void Animation::Animate()
         if ( channel.frames.empty() )
             return;
 
-        // Loop elapsed time
-        channel.elapsedTime = std::fmod( channel.elapsedTime, channel.frames.back().time );
+        float start = channel.frames.front().time;
+        float end = channel.frames.back().time;
+        float duration = end - start;
+
         // Update with dt
         channel.elapsedTime += dt;
+        // Loop elapsed time, taking into account the starting and ending times
+        if ( duration > 0 )
+            channel.elapsedTime = start + std::fmod( channel.elapsedTime - start, duration );
+        else
+            channel.elapsedTime = start;
 
         // Get frame with greatest time vlaue under elapsed time 
         auto frameIt = std::upper_bound( channel.frames.begin(), channel.frames.end(), channel.elapsedTime,
@@ -61,11 +68,14 @@ void Animation::Animate()
             return dt < frame.time;
         });
 
-        //if ( frameIt == channel.frames.end() )
-            //return;
+        Frame nextFrame = *frameIt;
+        Frame prevFrame = nextFrame;;
 
-        if ( frameIt != channel.frames.begin() )
-            --frameIt;
+        if ( frameIt != channel.frames.begin() && frameIt != channel.frames.end() )
+            prevFrame = *( frameIt - 1 );
+
+        float alpha = ( channel.elapsedTime - nextFrame.time ) / ( nextFrame.time - prevFrame.time );
+
 
         // Get node target of channel
         Node3D* node = dynamic_cast<Node3D*>( Node::NodeLibrary[channel.target] );
@@ -75,15 +85,24 @@ void Animation::Animate()
         switch (channel.path)
         {
             case pathTranslation:
-                node->LocalTransform().Translation() = std::get<Path::pathTranslation>(frameIt->output);
+                //node->LocalTransform().Translation() = std::get<Path::pathTranslation>(frameIt->output);
+                node->LocalTransform().Translation() = Lerp( std::get<Path::pathTranslation>(prevFrame.output),
+                                                             std::get<Path::pathTranslation>(nextFrame.output), 
+                                                             alpha );
                 break;
 
             case pathRotation:
-                node->LocalTransform().Rotation() = std::get<Path::pathRotation>(frameIt->output);
+                //node->LocalTransform().Rotation() =  std::get<Path::pathRotation>(frameIt->output);
+                node->LocalTransform().Rotation() = SphericalLerp( std::get<Path::pathRotation>(prevFrame.output), 
+                                                                   std::get<Path::pathRotation>(nextFrame.output),
+                                                                   alpha );
                 break;
 
             case pathScale:
-                node->LocalTransform().Scale() = std::get<Path::pathScale>(frameIt->output);
+                //node->LocalTransform().Scale() =  std::get<Path::pathScale>(frameIt->output);
+                node->LocalTransform().Scale() = Lerp( std::get<Path::pathScale>(prevFrame.output), 
+                                                       std::get<Path::pathScale>(nextFrame.output),
+                                                       alpha );
                 break;
 
             default:

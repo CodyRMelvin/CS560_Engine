@@ -49,6 +49,7 @@ class Quat
         void operator*=( const Quat& other );
         void operator*=( float c );
         void operator/=( float c );
+        Quat operator-();
 
         // Non-editing mathematical functions
         float Dot( const Quat& other ) const;
@@ -62,6 +63,7 @@ class Quat
         // Editing mathematical functions
         void Conjugated();
         void Inverted();
+        void Normalize();
         
 
 };
@@ -116,6 +118,11 @@ inline Quat Invert( const Quat& q )
 {
     float n = MagnitudeSquared(q);
     return Quat( glm::vec4( q.S / n, -q.V / n ) );
+}
+
+inline Quat Normalize( const Quat& q )
+{
+    return Quat( q.d / q.Magnitude() );
 }
 
 inline glm::vec3 Rotate( const Quat& q, const glm::vec3& v)
