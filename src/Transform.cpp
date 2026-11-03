@@ -67,9 +67,11 @@ Transform::Transform( fastgltf::TRS trs )
 
 glm::mat4 Transform::Matrix()
 {
+    // Lazy evaulation check
     if (!m_isDirty)
         return m_matrix;
 
+    // If new calculation is needed, calculate and set check to false
     m_matrix = glm::translate( glm::mat4(1), m_translation ) * 
                m_rotation.RotationMatrix() * glm::scale( glm::mat4(1), m_scale );
 
@@ -79,9 +81,11 @@ glm::mat4 Transform::Matrix()
 
 glm::mat4 Transform::Matrix() const
 {
+    // Lazy evaluation check
     if (!m_isDirty)
         return m_matrix;
 
+    // Calculate but do not store to preserve constness
     return glm::translate( glm::mat4(1), m_translation ) * 
            m_rotation.RotationMatrix() * glm::scale( glm::mat4(1), m_scale );
 

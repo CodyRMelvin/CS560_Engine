@@ -14,6 +14,7 @@
 
 #include "fastgltf/core.hpp"
 
+// Forward declarations
 typedef class Camera Camera;
 typedef class Node3D Node3D;
 typedef class Joint Joint;
@@ -22,17 +23,21 @@ typedef class Animation Animation;
 class Parser
 {
     public:
+        // Constructors and destructors, copy constructor is prohibited
         Parser( std::string path, fastgltf::Options options, fastgltf::Extensions extensions = fastgltf::Extensions::None );
         Parser( std::filesystem::path path, fastgltf::Options options, fastgltf::Extensions extensions = fastgltf::Extensions::None );
         Parser( Parser& ) = delete;
         ~Parser() = default;
 
+        // Methods to read in a node type. Returns either that node's data or an error message
         [[nodiscard]] std::expected< Mesh, Error > ReadMesh( const fastgltf::Mesh& mesh, bool isSkinned = false ) const;
         [[nodiscard]] std::expected< Camera, Error > ReadCamera( const fastgltf::Camera& cam ) const;
         [[nodiscard]] std::expected< Mesh::Skin, Error > ReadSkin( const fastgltf::Skin& skin ) const;
         [[nodiscard]] std::expected< Animation, Error > ReadAnimation( const fastgltf::Animation& animation ) const;
+        // Read in the full scene froim the gltf asset
         [[nodiscard]] bool ReadScene() const;
 
+        // Bool operator override to check if file was successfully loaded
         operator bool() const { return m_opened; }
 
     private:

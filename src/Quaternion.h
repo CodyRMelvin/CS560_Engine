@@ -68,6 +68,7 @@ class Quat
 
 };
 
+// Global operator overloads which return new quaternion objects
 inline Quat operator+ ( const Quat& lhs, const Quat& rhs )
 {
     return Quat( glm::vec4( lhs.S + rhs.S, lhs.V + rhs.V ) );
@@ -113,7 +114,7 @@ inline Quat Conjugate( const Quat& q )
     return Quat( glm::vec4( q.S, -q.V ) );
 }
 
-
+// Global inline equivalents to some methods
 inline Quat Invert( const Quat& q )
 {
     float n = MagnitudeSquared(q);

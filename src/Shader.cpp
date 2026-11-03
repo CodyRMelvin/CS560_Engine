@@ -41,111 +41,124 @@ Shader& Shader::operator=( const Shader& other )
 
 void Shader::LoadShader(std::filesystem::path path)
 {
-        if ( !exists(path) )
+    // Safety check
+    if ( !exists(path) )
+        return;
+
+    std::string fileName = path.filename().string();
+    m_name = fileName;
+    // Remove everything after the last period
+    size_t s = m_name.find(".");
+    if ( s != std::string::npos )
+    {
+        m_name.erase( m_name.begin() + s, m_name.end() );
+    }
+
+    // Start isolating the shadertype
+    std::string shaderType = fileName;
+    // Remove everything after the last period
+    s = shaderType.rfind(".");
+    if ( s != std::string::npos )
+    {
+        shaderType.erase( shaderType.begin() + s, shaderType.end() );
+    }
+    // Rmove everything before the last period
+    s = shaderType.find(".");
+    if ( s != std::string::npos )
+    {
+        shaderType.erase( shaderType.begin(), shaderType.begin() + s + 1 );
+    }
+    // The shader type extension should remain in shaderType
+
+    // Assign enum based on shader type string
+    if ( !shaderType.compare("vert") )
+        m_type = Shader::shaderTypeVertex;
+    else if ( !shaderType.compare("frag") )
+        m_type = Shader::shaderTypeFragment;
+    else if ( !shaderType.compare("geom") )
+        m_type = Shader::shaderTypeGeometry;
+    else if ( !shaderType.compare("comp") )
+        m_type = Shader::shaderTypeCompute;
+
+    // Create a shader based on shader type
+    switch (m_type)
+    {
+        case Shader::shaderTypeVertex:
+            m_shader = glCreateShader(GL_VERTEX_SHADER);
+            break;
+        case Shader::shaderTypeFragment:
+            m_shader = glCreateShader(GL_FRAGMENT_SHADER);
+            break;
+        case Shader::shaderTypeGeometry:
+            m_shader = glCreateShader(GL_GEOMETRY_SHADER);
+            break;
+        case Shader::shaderTypeCompute:
+            m_shader = glCreateShader(GL_COMPUTE_SHADER);
+            break;
+        default:
+            Logger::LogLine( Logger::severityWarning, "shader {} invalid type extension {}", fileName, shaderType );
             return;
+    }
 
-        std::string fileName = path.filename().string();
-        m_name = fileName;
-        size_t s = m_name.find(".");
-        if ( s != std::string::npos )
-        {
-            m_name.erase( m_name.begin() + s, m_name.end() );
-        }
+    // Load file into stream
+    Logger::LogLine( Logger::severityInfo, "Parsing shader {}", fileName );
+    std::ifstream stream( std::filesystem::path(path).string() );
 
-        std::string shaderType = fileName;
-        s = shaderType.rfind(".");
-        if ( s != std::string::npos )
-        {
-            shaderType.erase( shaderType.begin() + s, shaderType.end() );
-        }
-        s = shaderType.find(".");
-        if ( s != std::string::npos )
-        {
-            shaderType.erase( shaderType.begin(), shaderType.begin() + s + 1 );
-        }
+    // Read each line from the stream into a string
+    std::string shaderText;
+    while (stream) 
+    {
+        std::string line;
+        std::getline( stream, line );
+        shaderText += line + "\n";
+    }
 
-        if ( !shaderType.compare("vert") )
-            m_type = Shader::shaderTypeVertex;
-        else if ( !shaderType.compare("frag") )
-            m_type = Shader::shaderTypeFragment;
-        else if ( !shaderType.compare("geom") )
-            m_type = Shader::shaderTypeGeometry;
-        else if ( !shaderType.compare("comp") )
-            m_type = Shader::shaderTypeCompute;
-        switch (m_type)
-         {
-            case Shader::shaderTypeVertex:
-                m_shader = glCreateShader(GL_VERTEX_SHADER);
-                break;
-            case Shader::shaderTypeFragment:
-                m_shader = glCreateShader(GL_FRAGMENT_SHADER);
-                break;
-            case Shader::shaderTypeGeometry:
-                m_shader = glCreateShader(GL_GEOMETRY_SHADER);
-                break;
-            case Shader::shaderTypeCompute:
-                m_shader = glCreateShader(GL_COMPUTE_SHADER);
-                break;
-            default:
-                Logger::LogLine( Logger::severityWarning, "shader {} invalid type extension {}", 
-                                 fileName, shaderType );
-                return;
-        }
- 
-        Logger::LogLine( Logger::severityInfo, "Parsing shader {}", fileName );
-        std::ifstream stream( std::filesystem::path(path).string() );
+    Logger::LogLine( Logger::severityInfo, "Compiling shader {}", fileName );
 
-        std::string shaderText;
-        while (stream) 
-        {
-            std::string line;
-            std::getline( stream, line );
-            shaderText += line + "\n";
-        }
+    // Pass raw string into shader compilation
+    const char * p_shaderCString = shaderText.c_str();
+    glShaderSource( m_shader, 1, &p_shaderCString, nullptr );
+    glCompileShader(m_shader);
 
-        Logger::LogLine( Logger::severityInfo, "Compiling shader {}", fileName );
+    // Create separable program and attach the shader
+    Logger::LogLine( Logger::severityInfo, "Creating program {}", fileName );
+    m_program = glCreateProgram();
+    glAttachShader( m_program, m_shader );
+    glProgramParameteri( m_program, GL_PROGRAM_SEPARABLE, GL_TRUE );
+    glLinkProgram(m_program);
 
-        const char * p_shaderCString = shaderText.c_str();
-        glShaderSource( m_shader, 1, &p_shaderCString, nullptr );
-        glCompileShader(m_shader);
+    // Check the infor log for any errors
+    char buffer[512];
+    GLsizei length;
+    glGetProgramInfoLog( m_program, 512, &length, buffer );
+    if (length) 
+        Logger::LogLine(Logger::severityError, "{}", buffer );
 
-        Logger::LogLine( Logger::severityInfo, "Creating program {}", fileName );
-        m_program = glCreateProgram();
-        glAttachShader( m_program, m_shader );
-        glProgramParameteri( m_program, GL_PROGRAM_SEPARABLE, GL_TRUE );
-        glLinkProgram(m_program);
-
-        char buffer[512];
-        GLsizei length;
-        glGetProgramInfoLog( m_program, 512, &length, buffer );
-        if (length) Logger::LogLine(Logger::severityError, "{}", buffer );
-
-        GLint result;
+    // Validate the program
+    GLint result;
     glValidateProgram(m_program);
     glGetProgramiv( m_program, GL_VALIDATE_STATUS, &result );
-    if ( result == GL_FALSE )
-    {
+    if ( result == GL_TRUE )
+        return;
+
+    // Get validation error if failed
     GLint size = 0;
     glGetProgramiv( m_program, GL_INFO_LOG_LENGTH, &size );
-
     if ( size == 0 )
     {
         Logger::LogLine( Logger::severityWarning, "Program validation failed, unknown reason" );
     }
     else
     {
-        
-    //Preallocate a character vector of size length
-    char * errorMSG = new char[size];
+        //Preallocate a character vector of size length
+        char * errorMSG = new char[size];
 
-    //Write log to vector string
-    glGetShaderInfoLog( m_program, size, &size, errorMSG );
+        //Write log to vector string
+        glGetShaderInfoLog( m_program, size, &size, errorMSG );
 
-    //Print and return
-    Logger::LogLine( Logger::severityWarning, "Program validatio failed: {}", errorMSG );
+        //Print and return
+        Logger::LogLine( Logger::severityWarning, "Program validatio failed: {}", errorMSG );
     }
-    }
-
 }
 
 void Shader::LoadShader(std::string path)
@@ -155,6 +168,7 @@ void Shader::LoadShader(std::string path)
 
 void Shader::Destroy()
 {
+    // Delete shader and program
     glDeleteShader(m_shader);
     glDeleteProgram(m_program);
     m_program = 0;
@@ -194,11 +208,16 @@ bool Shader::Verify() const
 
 bool Shader::IsValid() const
 {
+    // Validate the program
     glValidateProgram(m_program);
     GLint check;
     glGetProgramiv( m_program, GL_VALIDATE_STATUS, &check );
+
+    // Store if this validation succeeded
     bool b = check == GL_TRUE;
+    // Check the link status
     glGetProgramiv( m_program, GL_LINK_STATUS, &check );
+    // If either failed, b should be false
     b &= check == GL_TRUE;
     return b;
 }

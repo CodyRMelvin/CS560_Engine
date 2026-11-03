@@ -53,16 +53,6 @@ void Camera::operator=(const Camera& other)
     *this = Camera(other);
 }
 
-void Camera::Initialize() 
-{
-    /*
-    Transform t = GlobalTransform();
-    glm::vec3 up = t.Rotation().Rotate( { 0, 1, 0 } );
-    glm::vec3 lookat = t.Rotation().Rotate( { 0, 0, -1 } );
-    LookAt( t.Translation(), lookat, up );
-    */
-}
-
 Camera& Camera::SetViewingDimensions( float degFov, float aspectRatio )
 {
     m_fov = glm::radians(degFov);
@@ -80,6 +70,7 @@ Camera& Camera::SetPlaneDistances( float near, float far )
 
 Camera& Camera::LookAt( glm::vec3 position, glm::vec3 lookAt, glm::vec3 up )
 {
+    // Set up/right/back vectors using results of glm's lookat function
     glm::mat4 m = glm::lookAt( position, lookAt - position, up );
     m_center = position;
     m_right = m[0];
@@ -107,11 +98,6 @@ glm::vec3 Camera::Back() const
 {
     return m_back;
 }
-
-/*glm::vec3 Camera::Viewport() const
-{
-    return glm::vec3( m_vpWidth, m_vpHeight, m_vpDistance );
-}*/
 
 float Camera::Near() const
 {
@@ -149,6 +135,7 @@ Camera& Camera::Rise(float distance)
 
 Camera& Camera::Rotate( glm::vec3 localAxis, float rads )
 {
+    // Rotate position vectors by passed in radians around passed in axis via quaternion
     glm::vec4 localAxis4 = glm::vec4( localAxis, 0 ) * View();
     Quat q( rads, localAxis4 );
     m_right = q.Rotate(m_right);

@@ -14,6 +14,7 @@
 #include "Parser.h"
 #include "Camera.h"
 #include "Node.h"
+#include "Animation.h"
 
 #include "fastgltf/core.hpp"
 #include "glad/glad.h"
@@ -26,9 +27,10 @@
 #include <stdexcept>
 #include <typeinfo>
 
-int activeAnimation = 0;
-int loadedFile = 0;
-bool reload = false;
+// Static variables used by gui
+static int activeAnimation = 0;
+static int loadedFile = 0;
+static bool reload = false;
 
 Application::Application()
     : m_window()
@@ -43,6 +45,7 @@ Application::~Application()
 
 void Application::SetUpScene( std::string assetDir )
 {
+    // Create full path and initialize parser for the desired gltf file
     std::filesystem::path dir( GetCWD().string() + assetDir );   
     Parser parser( dir, fastgltf::Options::LoadExternalBuffers | fastgltf::Options::DecomposeNodeMatrices );
     if (!parser)
@@ -51,6 +54,7 @@ void Application::SetUpScene( std::string assetDir )
         throw(e);
     }
 
+    // Read contents of file into program
     bool res = parser.ReadScene();
     if (!res)
     {
@@ -58,18 +62,21 @@ void Application::SetUpScene( std::string assetDir )
         throw(e);
     }
 
+    // Initialize each node 
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(), 
     []( auto& pair )
     {
         pair.second->Initialize();
     });
 
+    // Find first camera if one is present in scene
     auto camIt = std::find_if( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
     []( auto& pair )
     {
         return typeid(*pair.second) == typeid(Camera); 
     });
 
+    // Set active camera if one is found, otherwise construct default camera
     if ( camIt != Node::NodeLibrary.end() )
         m_activeCamera = *static_cast<Camera*>(camIt->second);
     else
@@ -79,24 +86,34 @@ void Application::SetUpScene( std::string assetDir )
                       .LookAt( { 0, .5, 1.5 }, { 0, 1, 0 }, { 0, 1, 0 } );
     }
 
+    // Initialize each animation
     std::for_each( Animation::AnimationLibrary.begin(), Animation::AnimationLibrary.end(), 
     []( Animation& anim )
     {
         anim.Initialize();
     });
+    // Set default active animation
     activeAnimation = 0;
 }
 
 void Application::Initialize()
 {
+    // Initialize logging system, info in debug mode, warnings in release
+#ifdef _DEBUG
     Logger::Initialize(Logger::severityInfo);
+#else
+    Logger::Initialize(Logger::severityWarning);
+#endif
     Logger::LogLine( Logger::severityInfo, "Logger Initialized" );
 
+    // Hard coded list of scenes to switch between
     m_files.push_back("roman/roman_D.gltf");
     m_files.push_back("viking_C_out/viking_C.gltf");
 
+    // Initialize window
     m_window.Initialize();
 
+    // Initialize DearImGUI
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
@@ -109,6 +126,7 @@ void Application::Initialize()
     ImGui_ImplSDL3_InitForOpenGL( m_window.SDLWindow(), m_window.Context() ); 
     ImGui_ImplOpenGL3_Init();
 
+    // Initialize the render device and set default config
     RenderDevice::Get().Initialize();
     RenderDevice::Get().config = 
     { 
@@ -118,7 +136,9 @@ void Application::Initialize()
         .renderMesh = true,
     };
 
+    // Set up the first scene
     SetUpScene( std::format( "/Assets/glTF/{}", m_files[loadedFile] ) );
+    // Initialize previous value for dt calculations
     m_previous = std::chrono::steady_clock::now();
 }
 
@@ -127,8 +147,10 @@ void Application::Run()
     SDL_Event e;
     Logger::LogLine( Logger::severityInfo, "Beginning program loop" );
 
+    // Program loop
     while (!m_shouldQuit)
     {
+        // Reload scene if needed
         if (reload)
         {
             DeleteAllNodes();
@@ -136,13 +158,16 @@ void Application::Run()
             reload = false;
         }
 
+        // Calculate delta time
         m_previous = m_now;
         m_now = std::chrono::steady_clock::now();
         m_deltaTime = std::chrono::duration_cast<std::chrono::milliseconds>( m_now - m_previous ).count() / 1000.f;
 
+        // Update active animation if not paused
         if ( !RenderDevice::Get().config.pauseAnimation )
             Animation::AnimationLibrary[activeAnimation].Animate();
 
+        // Render each node
         std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
         []( auto& pair )
         {
@@ -150,6 +175,7 @@ void Application::Run()
                 pair.second->Render();
         });
 
+        // Render GUI
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
@@ -157,16 +183,23 @@ void Application::Run()
         ImGui::ShowDemoWindow();
 
         ImGui::Begin("Config");
+        // Box to toggle rending the mesh
         ImGui::Checkbox( "Render Mesh", &RenderDevice::Get().config.renderMesh );
+        // Box to toggle rending the skeleton
         ImGui::Checkbox( "Render Skeleton", &RenderDevice::Get().config.renderSkeleton );
+        // Box to toggle pausing animations
         ImGui::Checkbox( "Pause Animation", &RenderDevice::Get().config.pauseAnimation );
+        // Box to toggle skinning the mesh
         ImGui::Checkbox( "Render Skinned", &RenderDevice::Get().config.renderSkinned );
+        // Slider to scale dt, slow down or accelerate program
         ImGui::DragFloat( "Delta Time Scalar", &m_dtScalar, .01, 0, 10 );
 
+        // Get the name of each animation
         std::vector<const char*> animations;
         for ( const Animation& anim : Animation::AnimationLibrary )
             animations.push_back( anim.Name().data() );
 
+        // Create list box of each animation so that user may switch between them
         if ( ImGui::BeginListBox("Active Animation") )
         {
             for ( int i = 0; i < animations.size(); ++i )
@@ -179,6 +212,7 @@ void Application::Run()
             ImGui::EndListBox();
         }
 
+        // Create list box of each available scene so that used may switch between them
         if ( ImGui::BeginListBox("Loaded Model") )
         {
             for ( int i = 0; i < m_files.size(); ++i )
@@ -195,28 +229,36 @@ void Application::Run()
         }
 
         ImGui::End();
-
         ImGui::Render();
+
+        // Run each render command in render device
         RenderDevice::Get().ExecuteCommands();
+        // Render the GUI with opengl
         ImGui_ImplOpenGL3_RenderDrawData( ImGui::GetDrawData() );
+        // Swap window
         m_window.SwapWindow();
 
+        // Manage SDL events
         while ( SDL_PollEvent(&e) )
         {
+            // Pass inuts to gui
             ImGui_ImplSDL3_ProcessEvent(&e);
 
             switch(e.type)
             {
+                // exit program
                 case SDL_EVENT_QUIT:
                     Logger::LogLine( Logger::severityInfo, "Event quit" );
                     m_shouldQuit = true;
                     break;
 
+                // Resize window
                 case SDL_EVENT_WINDOW_RESIZED:
                     m_window.Resize( glm::uvec2{ e.window.data1, e.window.data2 } ); 
                     break;
-                
+
                 case SDL_EVENT_KEY_DOWN:
+                    // Camera controls for translation
                     if (e.key.key == SDLK_W)
                         m_activeCamera.Forwards(.5);
                     if (e.key.key == SDLK_S)
@@ -229,7 +271,8 @@ void Application::Run()
                         m_activeCamera.Rise(-.5);
                     if ( e.key.key == SDLK_E )
                         m_activeCamera.Rise(.5);
-                    
+
+                    // Camera controls for rotation
                     if (e.key.key == SDLK_UP)
                         m_activeCamera.Rotate( { 1, 0, 0 }, .05 );
                     if (e.key.key == SDLK_DOWN)
@@ -243,6 +286,7 @@ void Application::Run()
                     if ( e.key.key == SDLK_SPACE )
                         RenderDevice::Get().config.pauseAnimation ^= true;
 
+                    // Exit program with exc button
                     if ( e.key.key == SDLK_ESCAPE )
                     {
                         SDL_Event eQuit;
@@ -261,19 +305,23 @@ void Application::Shutdown()
 {
     Logger::LogLine( Logger::severityInfo, "Shutting down application" );
 
+    // Shut down GUI
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL3_Shutdown();
     ImGui::DestroyContext();    
 
+    // Destroy all stored information for application
     m_window.Destroy();
     DeleteAllNodes();
     ShaderLibrary::DeleteShaders();
 
+    // Shutdown logger
     Logger::Shutdown();
 }
 
 Application& Application::Get()
 {
+    // Singleton access
     static Application a;
     return a;
 }

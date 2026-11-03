@@ -2,7 +2,7 @@
 // File   : Animation.h
 // Author : Cody Melvin
 // Date   : 2026/10/17
-// Brief  : 
+// Brief  : Implementation of class containing and updating animation data
 //**************************************************************************************************
 
 #include "Animation.h"
@@ -38,17 +38,16 @@ void Animation::Initialize()
 
 void Animation::Animate()
 {
-    //return;
     float dt = Application::Get().GetDeltaTime();
-    //dt *= 10;
-    //dt = .01;
 
+    // Handle animation for each channel
     std::for_each( m_channels.begin(), m_channels.end(), 
     [dt]( Channel& channel )
     {
         if ( channel.frames.empty() )
             return;
 
+        // Get relevant times to handle animations that do not start at 0
         float start = channel.frames.front().time;
         float end = channel.frames.back().time;
         float duration = end - start;
@@ -68,38 +67,37 @@ void Animation::Animate()
             return dt < frame.time;
         });
 
+        // Get the key frames before and after the current elapsed time
         Frame nextFrame = *frameIt;
         Frame prevFrame = nextFrame;;
-
         if ( frameIt != channel.frames.begin() && frameIt != channel.frames.end() )
             prevFrame = *( frameIt - 1 );
 
+        // Use the frame times to find the interpolation alpha
         float alpha = ( channel.elapsedTime - prevFrame.time ) / ( nextFrame.time - prevFrame.time );
-
 
         // Get node target of channel
         Node3D* node = dynamic_cast<Node3D*>( Node::NodeLibrary[channel.target] );
         if (!node)
             return;
 
+        // Update correct path
+        // Perform standard vector lerping for scale and translation, spherical lerp for rotation
         switch (channel.path)
         {
             case pathTranslation:
-                //node->LocalTransform().Translation() = std::get<Path::pathTranslation>(frameIt->output);
                 node->LocalTransform().Translation() = Lerp( std::get<Path::pathTranslation>(prevFrame.output),
                                                              std::get<Path::pathTranslation>(nextFrame.output), 
                                                              alpha );
                 break;
 
             case pathRotation:
-                //node->LocalTransform().Rotation() =  std::get<Path::pathRotation>(frameIt->output);
                 node->LocalTransform().Rotation() = SphericalLerp( std::get<Path::pathRotation>(prevFrame.output), 
                                                                    std::get<Path::pathRotation>(nextFrame.output),
                                                                    alpha );
                 break;
 
             case pathScale:
-                //node->LocalTransform().Scale() =  std::get<Path::pathScale>(frameIt->output);
                 node->LocalTransform().Scale() = Lerp( std::get<Path::pathScale>(prevFrame.output), 
                                                        std::get<Path::pathScale>(nextFrame.output),
                                                        alpha );
@@ -113,9 +111,11 @@ void Animation::Animate()
 
 Animation::Channel Animation::GetChannel( size_t index ) const
 {
+    // Safety check
     if ( index < m_channels.size() )
         return m_channels[index];
 
+    // Returns empty channel on invalid index
     Channel c = {0};
     return c;
 }

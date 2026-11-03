@@ -13,6 +13,7 @@
 
 #include "glad/glad.h"
 
+// Virtual class for rendering commands
 class ICommand
 {
     public:
@@ -21,6 +22,7 @@ class ICommand
         virtual void Execute() = 0;
 };
 
+// Struct detailing settings for render device
 struct RenderDeviceSettings
 {
     GLbitfield clearOptions = 0;
@@ -44,14 +46,18 @@ class RenderDevice
         RenderDevice( const RenderDevice&& ) = delete;
         RenderDevice& operator=( const RenderDevice& ) = delete;
 
+        // Initiallize elements needed for rendering
         void Initialize();
+        // Execute currently posessed commands
         void ExecuteCommands();
+        // Add new command
         void Push( ICommand* cmd, size_t buffer = 0 );
 
-        // Singleton method
+        // Singleton accessor
         static RenderDevice& Get();
 
     private:
+        // Array of buffers, buffers are arrays of commands
         std::vector< std::vector<ICommand*> > m_commandBuffers;
 
         // Hide constructor to force singleton

@@ -17,6 +17,7 @@
 class Shader
 {
     public:
+        // Enum relating to type of the shader
         enum ShaderType
         {
             shaderTypeInvalid = -1,
@@ -27,20 +28,24 @@ class Shader
             shaderTypeMax,
         };
 
+        // Rule of three
         Shader();
         Shader( const Shader& other );
+        Shader& operator=( const Shader& other );
         ~Shader();
 
-        Shader& operator=( const Shader& other );
-
+        // Methods to load a shader into opengl
         void LoadShader(std::filesystem::path path);
         void LoadShader(std::string path);
+        // Destroy the shader and program
         void Destroy();
 
+        // Methods and overloads to ensure shader is usable
         bool Verify() const;
         bool IsValid() const;
         operator bool() const;
 
+        // Getters
         std::string_view Name() const {return m_name;}
         ShaderType Type() const {return m_type;}
         GLenum GLenumType() const;

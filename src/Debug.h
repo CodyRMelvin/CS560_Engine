@@ -5,6 +5,7 @@
 // Brief  : Simple utility functions and objects for debugging 
 //**************************************************************************************************
 
+// Information should only be included when debugging
 #ifdef _DEBUG
 #pragma once
 #ifndef STUB_H
@@ -14,10 +15,12 @@
 
 #include "glad/glad.h"
 
+// Callbackl function for gl debug
 void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
 {
     Logger::Severity sev = Logger::severityInvalid;
 
+    // Set logger severity based on gl severity
     switch(severity)
     {
         case GL_DEBUG_SEVERITY_HIGH:
@@ -40,8 +43,8 @@ void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
             break;
     }
 
+    // Initialize string based on source enum
     std::string sourceStr;
-
     switch(source)
     {
         case GL_DEBUG_SOURCE_API:
@@ -67,8 +70,8 @@ void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
             break;
     }
 
+    // Initialize string based on tpye enum
     std::string typeStr;
-
     switch (type)
     {
         case GL_DEBUG_TYPE_ERROR:               
@@ -103,6 +106,7 @@ void glDebugOutput( GLenum source, GLenum type, GLuint id, GLenum severity, GLsi
             break;
     }
 
+    // Log gl debug callback
     Logger::LogLine( sev, "Source: {}, type: {}, id: {}, length: {}, message: {}, userParam: {}",
                      sourceStr, typeStr, id, length, message, userParam );
 }

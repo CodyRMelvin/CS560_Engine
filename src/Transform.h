@@ -16,6 +16,7 @@
 class Transform
 {
     public:
+        // Constructors
         Transform();
         Transform(glm::vec3 scale);
         Transform( float scaleX, float scaleY, float scaleZ );
@@ -25,10 +26,12 @@ class Transform
         Transform( glm::vec3 scale, glm::vec3 translation, glm::vec3 rotAxis, float rotRadians );
         Transform( fastgltf::TRS trs );
 
+        // Constant getters
         inline glm::vec3 Scale() const { return m_scale; }
         inline glm::vec3 Translation() const { return m_translation; }
         inline Quat Rotation() const { return m_rotation; }
 
+        // Non const reference getters
         inline glm::vec3& Scale() 
         { 
             m_isDirty = true;
@@ -47,6 +50,7 @@ class Transform
             return m_rotation; 
         }
 
+        // Setters
         inline void Scale(glm::vec3 scale) 
         { 
             m_scale = scale; 
@@ -76,12 +80,13 @@ class Transform
             m_rotation = Quat( radians, glm::normalize(axis) ); 
             m_isDirty = true; 
         }
-         inline void Rotation( const Quat& q )
-         {
-             m_rotation = q;
-             m_isDirty = true;
-         }
+        inline void Rotation( const Quat& q )
+        {
+            m_rotation = q;
+            m_isDirty = true;
+        }
 
+        // Calculates the transformation matric
         glm::mat4 Matrix();
         glm::mat4 Matrix() const; 
 
@@ -90,6 +95,7 @@ class Transform
         glm::vec3 m_translation;
         Quat m_rotation;
 
+        // Boolean for lazy evaluation
         bool m_isDirty;
         glm::mat4 m_matrix;
 };

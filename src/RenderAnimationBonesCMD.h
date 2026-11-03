@@ -29,27 +29,32 @@ public:
     {
         glClear(GL_DEPTH_BUFFER_BIT);
 
+        // Bind the given pipeline and set it's vertex shader as active
         pipeline.Bind();
         pipeline.ActiveShader(Shader::shaderTypeVertex);
 
+        // Pass matrices into shader
         glm::mat4 modelView = Application::Get().GetActiveCamera().View() * transform;
         pipeline.UniformMat( 0, modelView ); 
         pipeline.UniformMat( 1, Application::Get().GetActiveCamera().Perspective() );
         glm::mat4 normalMatrix = glm::transpose( glm::inverse(modelView) );
         pipeline.UniformMat( 2, normalMatrix );
 
+        // Get the mesh and draw the animation primitive
         Mesh* m = static_cast<Mesh*>( Node::NodeLibrary[meshIndex] );
         m->DrawAnimationPrimitive();
 
         // Rewriting the position values of the skeleton to reflect the cpu side bones
         // Absolutely not how I should be using indirect rendering but I'm in too deep now
             // Possibly implement a dynamic, direct mesh class to handle this correctly down the line
+        // TODO: Implement new mesh for dynamic shapes
         Vertex* vertices = static_cast<Vertex*>( m->MapVertexBuffer( m->GetAnimationPrimitive(), GL_WRITE_ONLY ) );
         for ( int i = 0; i < m->GetSkin().joints.size(); ++i )
         {
             vertices[i].pos = static_cast<Node3D*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->GlobalTransformMatrix()[3];
-            //vertices[i].pos = static_cast<Joint*>( Node::NodeLibrary[ m->GetSkin().joints[i] ] )->LocalTransform().Matrix()[3];
         }
+
+        // Unmap buffer and unbind pipeline 
         m->UnMapVertexBuffer( m->GetAnimationPrimitive() );
 
         pipeline.UnBind();

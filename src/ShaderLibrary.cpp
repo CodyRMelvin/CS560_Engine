@@ -44,6 +44,7 @@ void ShaderLibrary::CompileShaders(std::string directory)
 {
     Logger::LogLine( Logger::severityInfo, "Compiling shaders in path {}", directory );
 
+    // Safety check
     std::filesystem::path dir(directory);
     if ( !std::filesystem::exists(dir) )
     {
@@ -52,11 +53,13 @@ void ShaderLibrary::CompileShaders(std::string directory)
         return;
     }
 
+    // Iterate through all files in direcory and load/compile them
     for ( const auto& file : std::filesystem::recursive_directory_iterator(dir) )
     {
         Shader shader;
         shader.LoadShader(file);
 
+        // If shader doe snot pass verification, do not add it
         if ( !shader.Verify() )
             continue;
 

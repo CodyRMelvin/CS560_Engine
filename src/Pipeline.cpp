@@ -14,6 +14,7 @@ Pipeline::Pipeline( const Pipeline& other )
     , m_shaders()
     , m_name(other.m_name)
 {
+    // Copy over array of shader objects
     std::copy( other.m_shaders, other.m_shaders + Shader::shaderTypeMax, m_shaders );
 }
 
@@ -37,6 +38,7 @@ void Pipeline::Destroy()
 
 Pipeline& Pipeline::Shader( const class Shader& shader )
 {
+    // Add the given shader to the pipeline and instruct the pipeline to use that shader stage
     if (shader)
     {
         m_shaders[ shader.Type() ] = shader;
@@ -82,6 +84,7 @@ void Pipeline::UseNoShader()
     glUseProgram(0);
 }
 
+// Set the active shader program to the shader stored at the given stage
 void Pipeline::ActiveShader( const Shader::ShaderType type ) const
 {
     class Shader s = m_shaders[type];
@@ -116,6 +119,7 @@ void Pipeline::UniformInt( int location, int uniform ) const
 
 bool Pipeline::IsValid() const
 {
+    // Query opengl on if the pipeline is valid
     glValidateProgramPipeline(m_pipeline);
     GLint check;
     glGetProgramPipelineiv( m_pipeline, GL_VALIDATE_STATUS, &check );

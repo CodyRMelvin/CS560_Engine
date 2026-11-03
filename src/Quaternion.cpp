@@ -6,6 +6,7 @@
 //**************************************************************************************************
 
 #include "Quaternion.h"
+#include "Math.h"
 
 Quat& Quat::operator=( const Quat& other )
 {
@@ -85,9 +86,11 @@ glm::vec3 Quat::Rotate( const glm::vec3& v ) const
 glm::mat4 Quat::RotationMatrix() const
 {
     float mag = Magnitude();
-    if (!mag)
+    // Do not create matrix if magnitode is 0
+    if ( std::abs(mag) <= epsilon )
         return glm::mat4(1);
 
+    // Normalize the quaternion
     Quat q = *this / mag;
     return glm::mat4
     (

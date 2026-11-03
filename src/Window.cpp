@@ -36,6 +36,7 @@ Window::Window( uint32_t width, uint32_t height )
 
 void Window::Initialize()
 {
+    // Initialize sdl and throw an error if fails
     bool result = SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS );
     if (!result)
     {
@@ -43,6 +44,7 @@ void Window::Initialize()
         throw e;
     }
 
+    // Set various information for SDL
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, 0 );
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
     SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
@@ -51,6 +53,7 @@ void Window::Initialize()
     SDL_GL_SetAttribute( SDL_GL_DEPTH_SIZE, 24 );
     SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 8 );
 
+    // Create a window and throw an error on failure
     m_p_window = SDL_CreateWindow( "Window", m_res.x, m_res.y, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY );
     if (!m_p_window)
     {
@@ -58,6 +61,7 @@ void Window::Initialize()
         throw e;
     }
 
+    // Create an opengl context and throw an error on failure
     m_p_context = SDL_GL_CreateContext(m_p_window);
     if (!m_p_context)
     {
@@ -65,6 +69,7 @@ void Window::Initialize()
         throw e;
     }
 
+    // Assign more information to SDL and send window information to opengl
     SDL_GL_MakeCurrent( m_p_window, m_p_context );
     SDL_GL_SetSwapInterval(1);
     SDL_SetWindowPosition( m_p_window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED );
@@ -88,5 +93,6 @@ void Window::SwapWindow() const
 void Window::Resize( glm::uvec2 res )
 {
     m_res = res;
+    // Resizes the opengl viewport with the new size
     glViewport( 0, 0, res.x, res.y );
 }

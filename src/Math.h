@@ -16,13 +16,17 @@
 
 #include <cmath>
 
+// global constant epsilon value
 constexpr float epsilon = std::numeric_limits<float>::epsilon();
 
+// float clamp function
 inline float Clamp( float x, float min, float max )
 {
     return std::max( std::min( x, max ), min );
 }
 
+// Gets affine inverse of matrix
+// TODO: replace with glm equivalent
 inline glm::mat4 AffineInverse(glm::mat4 M)
 {
     glm::mat3 inverse( M );
@@ -37,12 +41,15 @@ inline glm::mat4 AffineInverse(glm::mat4 M)
     return result;
 }
 
+// Lerp function for glm vectors
+// Templatized to accept all vector variants
 template< glm::length_t L, typename T, glm::qualifier Q >
 inline glm::vec< L, T, Q > Lerp( glm::vec< L, T, Q > v1, glm::vec< L, T, Q > v2, float alpha )
 {
     return ( ( 1 - alpha ) * v1 ) + ( alpha * v2 );
 }
 
+// Perform spherical lerp on quaternion
 inline Quat SphericalLerp ( Quat q1, Quat q2, float alpha )
 {
     q1.Normalize();

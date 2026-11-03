@@ -19,9 +19,13 @@
 class ShaderLibrary
 {
     public:
+        // Gettter for shader based on name solely
         static Shader GetShader(std::string name);
+        // Getter for shader based on name and tyoe
         static Shader GetShader( std::string name, Shader::ShaderType type );
+        // Compile all shaders in a directory
         static void CompileShaders(std::string directory);
+        // Delete all shaders
         static void DeleteShaders();
 
     private:

@@ -10,7 +10,9 @@
 
 int main ( int argc, char* argv[] )
 {
+    // Create application
     Application& app = Application::Get();
+    // Initialize appliaction and catch any runtime errors
     try { app.Initialize(); }
     catch( std::runtime_error e )
     {
@@ -18,6 +20,7 @@ int main ( int argc, char* argv[] )
         app.Shutdown();
         return -1;
     }
+    // Run application and catch any runtime errors
     try { app.Run(); }
     catch( std::runtime_error e )
     {
@@ -25,6 +28,7 @@ int main ( int argc, char* argv[] )
         app.Shutdown();
         return -1;
     }
+    // Shutdown application when runtime loop exits
     app.Shutdown();
     return 0;
 }

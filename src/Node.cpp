@@ -77,82 +77,25 @@ Node3D::Node3D( const Node3D& other )
     : Node(other)
     , m_transform(other.m_transform)
 { }
-/*
-Transform Node3D::GlobalTransform() const
-{
-    if ( m_ID == m_parent )
-        return m_transform;
-
-    Node3D* parent =  dynamic_cast<Node3D*>( NodeLibrary[m_parent] );
-    if (!parent)
-        return m_transform;
-
-    Transform pt = parent->GlobalTransform();
-    Transform lt = m_transform;
-    Transform global;
-    global.Translation( GlobalTransformMatrix()[3] );
-    global.Rotation( lt.Rotation() * pt.Rotation() );
-    global.Scale( lt.Scale() * pt.Scale() );
-
-    return global;
-}
-*/
 
 glm::mat4 Node3D::GlobalTransformMatrix() const
 {
+    // Recursive base case, if there is no parent than the local transform is this node's global transform
     if (m_ID == m_parent)
         return m_transform.Matrix();
 
+    // If no parent with a transform is present, return the local transform
     Node3D* parent = dynamic_cast<Node3D*>(NodeLibrary[m_parent]);
     if (!parent)
         return m_transform.Matrix();
-
-    std::vector<glm::mat4> transforms;
-    const auto& GetTransforms = 
-    [&transforms]( this const auto self, const Node3D* node )
-    {
-        transforms.push_back( node->LocalTransform().Matrix() );
-        if ( node->ID() == node->ParentID() )
-            return;
-
-        self( static_cast<Node3D*>( node->Parent() ) );
-    };
-
-    /*GetTransforms(this);
-    glm::mat4 result = glm::mat4{1};
-    
-    std::for_each( transforms.begin(), transforms.end(), 
-    [&result]( const glm::mat4& mat )
-    {
-        result = result * mat;
-    });*/
-
+    // Multiply recur to get paren't global transform then multiply with local transform
     glm::mat4 result = parent->GlobalTransformMatrix() * m_transform.Matrix();
     return result;
 }
-/*
-Transform Node3D::GlobalTransform()
-{
-    if ( m_ID == m_parent )
-        return m_transform;
-
-    Node3D* parent =  dynamic_cast<Node3D*>( NodeLibrary[m_parent] );
-    if (!parent)
-        return m_transform;
-
-    Transform pt = parent->GlobalTransform();
-    Transform lt = m_transform;
-    Transform global;
-    global.Translation( GlobalTransformMatrix()[3] );
-    global.Rotation( lt.Rotation() * pt.Rotation() );
-    global.Scale( lt.Scale() * pt.Scale() );
-
-    return global;
-}
-*/
 
 glm::mat4 Node3D::GlobalTransformMatrix()
 {
+    // Same operations as prior but without constness
     if (m_ID == m_parent)
         return m_transform.Matrix();
 
@@ -177,6 +120,7 @@ void Node3D::LocalTransform( const Transform& localTransform )
 
 void DeleteAllNodes()
 {
+    // Iterate through node library and delete each node
     std::for_each( Node::NodeLibrary.begin(), Node::NodeLibrary.end(),
     []( auto& pair )
     {
@@ -184,7 +128,9 @@ void DeleteAllNodes()
         pair.second = nullptr;
     });
 
+    // Empty the node library
     Node::NodeLibrary.clear();
-
+    // Empty the animation library
+    // TODO: find better place/way to manage this
     Animation::AnimationLibrary.clear();
 }
