@@ -4,7 +4,7 @@ Project is built using cmake and ninja multiconfig
 To build from scratch on windows, run the cmake_windows.bat file
 On linux, run the build_cmake script
 
-To compile and run on windows, locate the build folder, within is a visual studio solution. Make sure to set CS560 as the active project
+To compile and run on windows, locate the build folder, within is a visual studio solution. Make sure to set CS560 as the startup project
 To compile and run on linux, use the build_program and run scripts, passing in the configuration (debug, release, relwithdebuginfo). These are not case sensitive
 
 Project is made with C++23 and the clang compiler on linux, msvc on windows, with Glad, OpenGL, DearImGUI, SDL, fastgltf (which includes simdjson and simdutf), and glm.

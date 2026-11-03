@@ -22,6 +22,7 @@
 #include "imgui.h"
 #include "imgui_impl_sdl3.h"
 #include "imgui_impl_opengl3.h"
+#include "SDL3/SDL_timer.h"
 
 #include <algorithm>
 #include <stdexcept>
@@ -180,9 +181,11 @@ void Application::Run()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
+        //ImGui::ShowDemoWindow();
 
         ImGui::Begin("Config");
+        // Shows framerate in window
+        ImGui::Text( std::format( "FPS: {:.3}", ImGui::GetIO().Framerate ).c_str());
         // Box to toggle rending the mesh
         ImGui::Checkbox( "Render Mesh", &RenderDevice::Get().config.renderMesh );
         // Box to toggle rending the skeleton

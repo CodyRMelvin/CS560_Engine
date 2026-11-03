@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.31 )
 
 project( dependencies LANGUAGES C )
 
-file( GLOB files "glad/*.c" "glad/*.h" "external/SIV/index_vector.hpp" )
+file( GLOB files "glad/*.c" "glad/*.h" )
 
 set( CMAKE_CXX_FLAGS_DEBUG "-O0 -g" )
 set( CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O4 -g" )
@@ -11,7 +11,6 @@ set( CMAKE_CXX_FLAGS_RELEASE "-O4 -DNDEBUG" )
 add_library( ${PROJECT_NAME} ${files} )
 
 target_include_directories( ${PROJECT_NAME} PRIVATE glad )
-target_include_directories( ${PROJECT_NAME} PRIVATE external/SIV )
 
 add_subdirectory(external/SDL)
 add_subdirectory(external/glm)
